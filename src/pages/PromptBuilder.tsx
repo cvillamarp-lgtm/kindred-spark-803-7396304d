@@ -144,6 +144,9 @@ export default function PromptBuilder() {
         parts.push(selected.join(", "));
       }
     });
+    if (customPrompt.trim()) {
+      parts.push(customPrompt.trim());
+    }
     return parts.join(", ");
   };
 
