@@ -3,7 +3,10 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { AuthProvider } from "@/hooks/useAuth";
+import ProtectedRoute from "@/components/ProtectedRoute";
 import AppLayout from "@/components/AppLayout";
+import Auth from "./pages/Auth";
 import Index from "./pages/Index";
 import Audience from "./pages/Audience";
 import EditorialCalendar from "./pages/EditorialCalendar";
@@ -28,28 +31,37 @@ const queryClient = new QueryClient({
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <AppLayout>
+    <AuthProvider>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
           <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/audience" element={<Audience />} />
-            <Route path="/calendar" element={<EditorialCalendar />} />
-            <Route path="/episodes" element={<Episodes />} />
-            <Route path="/brand" element={<BrandStudio />} />
-            <Route path="/design" element={<DesignStudio />} />
-            <Route path="/prompts" element={<PromptBuilder />} />
-            <Route path="/metrics" element={<MetricsPage />} />
-            <Route path="/resources" element={<Resources />} />
-            <Route path="/scorecard" element={<Scorecard />} />
-            <Route path="/tasks" element={<Tasks />} />
-            <Route path="*" element={<NotFound />} />
+            <Route path="/auth" element={<Auth />} />
+            <Route path="*" element={
+              <ProtectedRoute>
+                <AppLayout>
+                  <Routes>
+                    <Route path="/" element={<Index />} />
+                    <Route path="/audience" element={<Audience />} />
+                    <Route path="/calendar" element={<EditorialCalendar />} />
+                    <Route path="/episodes" element={<Episodes />} />
+                    <Route path="/brand" element={<BrandStudio />} />
+                    <Route path="/design" element={<DesignStudio />} />
+                    <Route path="/prompts" element={<PromptBuilder />} />
+                    <Route path="/metrics" element={<MetricsPage />} />
+                    <Route path="/resources" element={<Resources />} />
+                    <Route path="/scorecard" element={<Scorecard />} />
+                    <Route path="/tasks" element={<Tasks />} />
+                    <Route path="*" element={<NotFound />} />
+                  </Routes>
+                </AppLayout>
+              </ProtectedRoute>
+            } />
           </Routes>
-        </AppLayout>
-      </BrowserRouter>
-    </TooltipProvider>
+        </BrowserRouter>
+      </TooltipProvider>
+    </AuthProvider>
   </QueryClientProvider>
 );
 
