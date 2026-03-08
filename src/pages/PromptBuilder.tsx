@@ -242,6 +242,24 @@ export default function PromptBuilder() {
         </div>
       </div>
 
+      {/* Custom prompt */}
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm flex items-center gap-2">
+            <PenLine className="h-4 w-4 text-primary" />
+            Prompt personalizado
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Textarea
+            placeholder="Escribe instrucciones adicionales, ej: 'mujer latina con audífonos en un estudio de podcast moderno, fondo neón azul'..."
+            value={customPrompt}
+            onChange={(e) => setCustomPrompt(e.target.value)}
+            className="min-h-[80px] text-sm font-mono resize-y"
+          />
+        </CardContent>
+      </Card>
+
       {/* Prompt preview + Generate */}
       {prompt && (
         <Card className="border-primary/30 bg-primary/5">
