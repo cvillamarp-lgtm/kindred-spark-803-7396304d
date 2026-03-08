@@ -1,4 +1,4 @@
-import { Home, Users, Calendar, Mic, Image, BookOpen, BarChart3, FileText, Settings, ListTodo } from "lucide-react";
+import { Home, Users, Calendar, Mic, Image, BookOpen, BarChart3, FileText, Settings, ListTodo, Wand2 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
 import {
@@ -20,6 +20,7 @@ const navItems = [
   { label: "Episodes", url: "/episodes", icon: Mic },
   { label: "Brand", url: "/brand", icon: Image },
   { label: "Design", url: "/design", icon: BookOpen },
+  { label: "Prompts", url: "/prompts", icon: Wand2 },
   { label: "Metrics", url: "/metrics", icon: BarChart3 },
   { label: "Resources", url: "/resources", icon: FileText },
   { label: "Score", url: "/scorecard", icon: Settings },
