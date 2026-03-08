@@ -117,6 +117,7 @@ interface GeneratedImage {
 
 export default function PromptBuilder() {
   const [selections, setSelections] = useState<Record<string, string[]>>({});
+  const [customPrompt, setCustomPrompt] = useState("");
   const [copied, setCopied] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [generatedImages, setGeneratedImages] = useState<GeneratedImage[]>([]);
