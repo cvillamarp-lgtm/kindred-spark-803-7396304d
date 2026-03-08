@@ -2,7 +2,8 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Wand2, Copy, Check, RotateCcw, ImageIcon, Loader2, Download, Trash2 } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { Wand2, Copy, Check, RotateCcw, ImageIcon, Loader2, Download, Trash2, PenLine } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -117,6 +118,7 @@ interface GeneratedImage {
 
 export default function PromptBuilder() {
   const [selections, setSelections] = useState<Record<string, string[]>>({});
+  const [customPrompt, setCustomPrompt] = useState("");
   const [copied, setCopied] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [generatedImages, setGeneratedImages] = useState<GeneratedImage[]>([]);
@@ -143,6 +145,9 @@ export default function PromptBuilder() {
         parts.push(selected.join(", "));
       }
     });
+    if (customPrompt.trim()) {
+      parts.push(customPrompt.trim());
+    }
     return parts.join(", ");
   };
 
@@ -158,6 +163,7 @@ export default function PromptBuilder() {
 
   const reset = () => {
     setSelections({});
+    setCustomPrompt("");
     toast("Selecciones limpiadas");
   };
 
@@ -235,6 +241,24 @@ export default function PromptBuilder() {
           </Button>
         </div>
       </div>
+
+      {/* Custom prompt */}
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm flex items-center gap-2">
+            <PenLine className="h-4 w-4 text-primary" />
+            Prompt personalizado
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Textarea
+            placeholder="Escribe instrucciones adicionales, ej: 'mujer latina con audífonos en un estudio de podcast moderno, fondo neón azul'..."
+            value={customPrompt}
+            onChange={(e) => setCustomPrompt(e.target.value)}
+            className="min-h-[80px] text-sm font-mono resize-y"
+          />
+        </CardContent>
+      </Card>
 
       {/* Prompt preview + Generate */}
       {prompt && (
