@@ -73,11 +73,16 @@ export function AppSidebar() {
       </SidebarContent>
 
       <SidebarFooter>
-        {!collapsed && (
-          <div className="px-4 pb-4">
-            <p className="text-xs text-sidebar-foreground/50 font-display">energy / amtme</p>
-          </div>
-        )}
+        <div className="px-2 pb-4 space-y-2">
+          <button
+            onClick={() => supabase.auth.signOut()}
+            className="flex items-center gap-2 w-full px-3 py-2 text-sm text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent rounded-md transition-colors"
+          >
+            <LogOut className="h-4 w-4" />
+            {!collapsed && <span>Cerrar sesión</span>}
+          </button>
+          {!collapsed && <p className="text-xs text-sidebar-foreground/50 font-display px-1">energy / amtme</p>}
+        </div>
       </SidebarFooter>
     </Sidebar>
   );
