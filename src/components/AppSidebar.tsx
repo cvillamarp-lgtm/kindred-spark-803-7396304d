@@ -20,6 +20,7 @@ const navItems = [
   { label: "Episodes", url: "/episodes", icon: Mic },
   { label: "Brand", url: "/brand", icon: Image },
   { label: "Design", url: "/design", icon: BookOpen },
+  { label: "Prompts", url: "/prompts", icon: Wand2 },
   { label: "Metrics", url: "/metrics", icon: BarChart3 },
   { label: "Resources", url: "/resources", icon: FileText },
   { label: "Score", url: "/scorecard", icon: Settings },
