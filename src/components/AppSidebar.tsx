@@ -15,16 +15,16 @@ import {
 
 const navItems = [
   { label: "Dashboard", url: "/", icon: Home },
-  { label: "Audience", url: "/audience", icon: Users },
-  { label: "Calendar", url: "/calendar", icon: Calendar },
-  { label: "Episodes", url: "/episodes", icon: Mic },
+  { label: "Audiencia", url: "/audience", icon: Users },
+  { label: "Calendario", url: "/calendar", icon: Calendar },
+  { label: "Episodios", url: "/episodes", icon: Mic },
   { label: "Brand", url: "/brand", icon: Image },
   { label: "Design", url: "/design", icon: BookOpen },
   { label: "Prompts", url: "/prompts", icon: Wand2 },
-  { label: "Metrics", url: "/metrics", icon: BarChart3 },
-  { label: "Resources", url: "/resources", icon: FileText },
+  { label: "Métricas", url: "/metrics", icon: BarChart3 },
+  { label: "Recursos", url: "/resources", icon: FileText },
   { label: "Score", url: "/scorecard", icon: Settings },
-  { label: "Tasks", url: "/tasks", icon: ListTodo },
+  { label: "Tareas", url: "/tasks", icon: ListTodo },
 ];
 
 export function AppSidebar() {
@@ -40,7 +40,7 @@ export function AppSidebar() {
         </div>
         {!collapsed && (
           <span className="font-display font-bold text-sidebar-primary-foreground text-lg tracking-tight">
-            AMTME
+            AMTME OS
           </span>
         )}
       </div>
@@ -74,7 +74,7 @@ export function AppSidebar() {
       <SidebarFooter>
         {!collapsed && (
           <div className="px-4 pb-4">
-            <p className="text-xs text-sidebar-foreground/50 font-display">energy / lumen</p>
+            <p className="text-xs text-sidebar-foreground/50 font-display">energy / amtme</p>
           </div>
         )}
       </SidebarFooter>
