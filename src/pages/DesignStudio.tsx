@@ -1,9 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
-import { toast } from "sonner";
 import {
   Image as ImageIcon,
   Palette,
@@ -22,30 +21,18 @@ import {
   AlertTriangle,
 } from "lucide-react";
 import { calculateContrast, meetsWCAG, determineBackground, generateFilename } from "@/lib/design-utils";
-
-interface PiezaData {
-  piezas: any[];
-  paleta: { nombre: string; colores: any[] };
-  checklistQA: any[];
-  tipos: any[];
-}
+import { usePiezasData } from "@/hooks/usePiezas";
+import type { Pieza } from "@/lib/types/pieza";
 
 export default function DesignStudio() {
-  const [data, setData] = useState<PiezaData | null>(null);
-  const [selectedPiece, setSelectedPiece] = useState<any | null>(null);
+  const { data, isLoading, error } = usePiezasData();
+  const [selectedPiece, setSelectedPiece] = useState<Pieza | null>(null);
   const [search, setSearch] = useState("");
   const [qaChecks, setQaChecks] = useState<Record<string, boolean>>({});
   const [contrastFg, setContrastFg] = useState("#013BD8");
   const [contrastBg, setContrastBg] = useState("#FFFFFF");
 
-  useEffect(() => {
-    fetch("/data/piezas.json")
-      .then((r) => r.json())
-      .then(setData)
-      .catch(() => toast.error("Error cargando datos de diseño"));
-  }, []);
-
-  if (!data) {
+  if (isLoading || !data) {
     return (
       <div className="page-container animate-fade-in">
         <h1 className="page-title">Design Studio</h1>
