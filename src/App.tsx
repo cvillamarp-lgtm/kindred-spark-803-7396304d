@@ -10,6 +10,7 @@ import EditorialCalendar from "./pages/EditorialCalendar";
 import Episodes from "./pages/Episodes";
 import BrandStudio from "./pages/BrandStudio";
 import DesignStudio from "./pages/DesignStudio";
+import PromptBuilder from "./pages/PromptBuilder";
 import MetricsPage from "./pages/Metrics";
 import Resources from "./pages/Resources";
 import Scorecard from "./pages/Scorecard";
