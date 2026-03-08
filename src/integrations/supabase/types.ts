@@ -14,7 +14,408 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      audience_members: {
+        Row: {
+          age_range: string | null
+          beliefs: string[] | null
+          created_at: string
+          description: string | null
+          desires: string[] | null
+          emotional_state: string | null
+          gender: string | null
+          id: string
+          name: string
+          needs: string[] | null
+          occupation: string | null
+          pain_points: string[] | null
+          quote: string | null
+          triggers: string[] | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          age_range?: string | null
+          beliefs?: string[] | null
+          created_at?: string
+          description?: string | null
+          desires?: string[] | null
+          emotional_state?: string | null
+          gender?: string | null
+          id?: string
+          name: string
+          needs?: string[] | null
+          occupation?: string | null
+          pain_points?: string[] | null
+          quote?: string | null
+          triggers?: string[] | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          age_range?: string | null
+          beliefs?: string[] | null
+          created_at?: string
+          description?: string | null
+          desires?: string[] | null
+          emotional_state?: string | null
+          gender?: string | null
+          id?: string
+          name?: string
+          needs?: string[] | null
+          occupation?: string | null
+          pain_points?: string[] | null
+          quote?: string | null
+          triggers?: string[] | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      brand_assets: {
+        Row: {
+          created_at: string
+          id: string
+          label: string
+          type: string
+          updated_at: string
+          user_id: string | null
+          value: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          label: string
+          type: string
+          updated_at?: string
+          user_id?: string | null
+          value: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          label?: string
+          type?: string
+          updated_at?: string
+          user_id?: string | null
+          value?: string
+        }
+        Relationships: []
+      }
+      episode_templates: {
+        Row: {
+          body: string | null
+          closing: string | null
+          created_at: string
+          cta: string | null
+          hook: string | null
+          id: string
+          structure: string | null
+          title: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          body?: string | null
+          closing?: string | null
+          created_at?: string
+          cta?: string | null
+          hook?: string | null
+          id?: string
+          structure?: string | null
+          title: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          body?: string | null
+          closing?: string | null
+          created_at?: string
+          cta?: string | null
+          hook?: string | null
+          id?: string
+          structure?: string | null
+          title?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      episodes: {
+        Row: {
+          created_at: string
+          cta: string | null
+          distribution_status: string | null
+          duration: string | null
+          editing_status: string | null
+          hook: string | null
+          id: string
+          number: string | null
+          quote: string | null
+          recording_status: string | null
+          release_date: string | null
+          script_status: string | null
+          status: string | null
+          summary: string | null
+          tags: string[] | null
+          theme: string | null
+          title: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          cta?: string | null
+          distribution_status?: string | null
+          duration?: string | null
+          editing_status?: string | null
+          hook?: string | null
+          id?: string
+          number?: string | null
+          quote?: string | null
+          recording_status?: string | null
+          release_date?: string | null
+          script_status?: string | null
+          status?: string | null
+          summary?: string | null
+          tags?: string[] | null
+          theme?: string | null
+          title: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          cta?: string | null
+          distribution_status?: string | null
+          duration?: string | null
+          editing_status?: string | null
+          hook?: string | null
+          id?: string
+          number?: string | null
+          quote?: string | null
+          recording_status?: string | null
+          release_date?: string | null
+          script_status?: string | null
+          status?: string | null
+          summary?: string | null
+          tags?: string[] | null
+          theme?: string | null
+          title?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      generation_history: {
+        Row: {
+          created_at: string
+          id: string
+          prompt: string | null
+          result: string | null
+          status: string | null
+          type: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          prompt?: string | null
+          result?: string | null
+          status?: string | null
+          type?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          prompt?: string | null
+          result?: string | null
+          status?: string | null
+          type?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      guests: {
+        Row: {
+          bio: string | null
+          contact: string | null
+          created_at: string
+          id: string
+          name: string
+          role: string | null
+          status: string | null
+          topics: string[] | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          bio?: string | null
+          contact?: string | null
+          created_at?: string
+          id?: string
+          name: string
+          role?: string | null
+          status?: string | null
+          topics?: string[] | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          bio?: string | null
+          contact?: string | null
+          created_at?: string
+          id?: string
+          name?: string
+          role?: string | null
+          status?: string | null
+          topics?: string[] | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      mentions: {
+        Row: {
+          context: string | null
+          created_at: string
+          date: string | null
+          id: string
+          link: string | null
+          name: string | null
+          platform: string | null
+          user_id: string | null
+        }
+        Insert: {
+          context?: string | null
+          created_at?: string
+          date?: string | null
+          id?: string
+          link?: string | null
+          name?: string | null
+          platform?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          context?: string | null
+          created_at?: string
+          date?: string | null
+          id?: string
+          link?: string | null
+          name?: string | null
+          platform?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      metrics: {
+        Row: {
+          created_at: string
+          date: string | null
+          id: string
+          name: string | null
+          source: string | null
+          unit: string | null
+          user_id: string | null
+          value: number | null
+        }
+        Insert: {
+          created_at?: string
+          date?: string | null
+          id?: string
+          name?: string | null
+          source?: string | null
+          unit?: string | null
+          user_id?: string | null
+          value?: number | null
+        }
+        Update: {
+          created_at?: string
+          date?: string | null
+          id?: string
+          name?: string | null
+          source?: string | null
+          unit?: string | null
+          user_id?: string | null
+          value?: number | null
+        }
+        Relationships: []
+      }
+      resources: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          link: string | null
+          status: string | null
+          title: string | null
+          type: string | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          link?: string | null
+          status?: string | null
+          title?: string | null
+          type?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          link?: string | null
+          status?: string | null
+          title?: string | null
+          type?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      tasks: {
+        Row: {
+          category: string | null
+          created_at: string
+          description: string | null
+          due_date: string | null
+          id: string
+          priority: string | null
+          status: string | null
+          title: string | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          priority?: string | null
+          status?: string | null
+          title?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          priority?: string | null
+          status?: string | null
+          title?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
