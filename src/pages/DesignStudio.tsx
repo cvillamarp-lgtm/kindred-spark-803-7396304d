@@ -206,7 +206,7 @@ export default function DesignStudio() {
                 ))}
               </div>
               <div className="pt-3 border-t border-border space-y-2 text-sm">
-                <div className="flex justify-between"><span className="text-muted-foreground">Contraste</span><span className="text-foreground">{selectedPiece.paleta.contraste.ratio}:1 ({selectedPiece.paleta.contraste.nivel})</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">Contraste</span><span className="text-foreground">{String((selectedPiece.paleta.contraste as any)?.ratio ?? "")}:1 ({String((selectedPiece.paleta.contraste as any)?.nivel ?? "")})</span></div>
                 <div className="flex justify-between"><span className="text-muted-foreground">Acentos</span><span className="text-foreground">{selectedPiece.paleta.acentos}</span></div>
               </div>
             </div>
