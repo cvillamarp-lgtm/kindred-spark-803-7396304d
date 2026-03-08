@@ -2,7 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
 serve(async (req) => {
@@ -10,6 +10,13 @@ serve(async (req) => {
 
   try {
     const { theme, title, format: epFormat } = await req.json();
+
+    if (!theme && !title) {
+      return new Response(JSON.stringify({ error: "Se requiere un tema o título" }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
@@ -22,9 +29,9 @@ serve(async (req) => {
 🎬 CIERRE (frase memorable de despedida)`;
 
     const userPrompt = `Genera un guión de podcast para:
-- Título: ${title || "Sin título"}
-- Tema: ${theme || "Tema libre"}
-- Formato: ${epFormat || "Episodio solo"}
+- Título: ${(title || "Sin título").substring(0, 200)}
+- Tema: ${(theme || "Tema libre").substring(0, 500)}
+- Formato: ${(epFormat || "Episodio solo").substring(0, 50)}
 
 El guión debe ser conversacional, auténtico y listo para grabar.`;
 
