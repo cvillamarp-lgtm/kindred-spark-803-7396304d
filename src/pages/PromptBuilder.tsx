@@ -2,8 +2,9 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Wand2, Copy, Check, RotateCcw } from "lucide-react";
+import { Wand2, Copy, Check, RotateCcw, ImageIcon, Loader2, Download, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 const SECTIONS = [
   {
@@ -108,9 +109,18 @@ const SECTIONS = [
   },
 ];
 
+interface GeneratedImage {
+  url: string;
+  prompt: string;
+  timestamp: number;
+}
+
 export default function PromptBuilder() {
   const [selections, setSelections] = useState<Record<string, string[]>>({});
   const [copied, setCopied] = useState(false);
+  const [generating, setGenerating] = useState(false);
+  const [generatedImages, setGeneratedImages] = useState<GeneratedImage[]>([]);
+  const [selectedImage, setSelectedImage] = useState<GeneratedImage | null>(null);
 
   const toggle = (sectionId: string, option: string) => {
     setSelections((prev) => {
@@ -151,13 +161,68 @@ export default function PromptBuilder() {
     toast("Selecciones limpiadas");
   };
 
+  const generateImage = async () => {
+    if (!prompt) {
+      toast.error("Selecciona al menos un parámetro para generar");
+      return;
+    }
+    setGenerating(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-image", {
+        body: { prompt },
+      });
+
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      const newImage: GeneratedImage = {
+        url: data.imageUrl,
+        prompt,
+        timestamp: Date.now(),
+      };
+      setGeneratedImages((prev) => [newImage, ...prev]);
+      setSelectedImage(newImage);
+      toast.success("¡Imagen generada exitosamente!");
+    } catch (e: any) {
+      console.error("Image generation error:", e);
+      toast.error(e.message || "Error al generar la imagen");
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  const downloadImage = async (img: GeneratedImage) => {
+    try {
+      const response = await fetch(img.url);
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `amtme-${img.timestamp}.png`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      toast.success("Imagen descargada");
+    } catch {
+      // Fallback: open in new tab
+      window.open(img.url, "_blank");
+    }
+  };
+
+  const removeImage = (timestamp: number) => {
+    setGeneratedImages((prev) => prev.filter((i) => i.timestamp !== timestamp));
+    if (selectedImage?.timestamp === timestamp) setSelectedImage(null);
+    toast("Imagen eliminada de la galería");
+  };
+
   return (
     <div className="page-container animate-fade-in">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="page-title">Prompt Builder</h1>
           <p className="page-subtitle">
-            Selecciona opciones de cada sección para construir tu prompt ideal
+            Construye tu prompt y genera imágenes con IA
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -171,7 +236,7 @@ export default function PromptBuilder() {
         </div>
       </div>
 
-      {/* Prompt preview */}
+      {/* Prompt preview + Generate */}
       {prompt && (
         <Card className="border-primary/30 bg-primary/5">
           <CardHeader className="pb-2">
@@ -180,16 +245,107 @@ export default function PromptBuilder() {
                 <Wand2 className="h-4 w-4 text-primary" />
                 Prompt generado
               </CardTitle>
-              <Button size="sm" variant="outline" onClick={copyPrompt}>
-                {copied ? <Check className="h-3.5 w-3.5 mr-1" /> : <Copy className="h-3.5 w-3.5 mr-1" />}
-                {copied ? "Copiado" : "Copiar"}
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button size="sm" variant="outline" onClick={copyPrompt}>
+                  {copied ? <Check className="h-3.5 w-3.5 mr-1" /> : <Copy className="h-3.5 w-3.5 mr-1" />}
+                  {copied ? "Copiado" : "Copiar"}
+                </Button>
+                <Button size="sm" onClick={generateImage} disabled={generating}>
+                  {generating ? (
+                    <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" />
+                  ) : (
+                    <ImageIcon className="h-3.5 w-3.5 mr-1" />
+                  )}
+                  {generating ? "Generando..." : "Generar imagen"}
+                </Button>
+              </div>
             </div>
           </CardHeader>
           <CardContent>
             <p className="text-sm text-foreground/80 leading-relaxed font-mono bg-card rounded-lg p-3 border">
               {prompt}
             </p>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Generated images gallery */}
+      {generatedImages.length > 0 && (
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm flex items-center gap-2">
+              <ImageIcon className="h-4 w-4 text-primary" />
+              Imágenes generadas ({generatedImages.length})
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+              {generatedImages.map((img) => (
+                <div
+                  key={img.timestamp}
+                  className={`group relative rounded-lg overflow-hidden border cursor-pointer transition-all ${
+                    selectedImage?.timestamp === img.timestamp
+                      ? "border-primary ring-2 ring-primary/30"
+                      : "border-border hover:border-primary/40"
+                  }`}
+                  onClick={() => setSelectedImage(img)}
+                >
+                  <img
+                    src={img.url}
+                    alt="Generated"
+                    className="w-full aspect-square object-cover"
+                    loading="lazy"
+                  />
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-end justify-center opacity-0 group-hover:opacity-100">
+                    <div className="flex gap-1.5 p-2">
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        className="h-7 text-xs"
+                        onClick={(e) => { e.stopPropagation(); downloadImage(img); }}
+                      >
+                        <Download className="h-3 w-3" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        className="h-7 text-xs"
+                        onClick={(e) => { e.stopPropagation(); removeImage(img.timestamp); }}
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Selected image detail */}
+            {selectedImage && (
+              <div className="mt-4 p-4 bg-secondary rounded-lg space-y-3">
+                <img
+                  src={selectedImage.url}
+                  alt="Selected"
+                  className="w-full max-w-lg mx-auto rounded-lg border border-border"
+                />
+                <p className="text-xs text-muted-foreground font-mono line-clamp-3">
+                  {selectedImage.prompt}
+                </p>
+                <div className="flex gap-2 justify-center">
+                  <Button size="sm" variant="outline" onClick={() => downloadImage(selectedImage)}>
+                    <Download className="h-3.5 w-3.5 mr-1" />
+                    Descargar
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={() => {
+                    navigator.clipboard.writeText(selectedImage.url);
+                    toast.success("URL copiada");
+                  }}>
+                    <Copy className="h-3.5 w-3.5 mr-1" />
+                    Copiar URL
+                  </Button>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
       )}
