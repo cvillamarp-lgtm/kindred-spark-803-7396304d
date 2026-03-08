@@ -57,6 +57,15 @@ export default {
   			]
   		},
   		colors: {
+  			'amtme-blue': '#013BD8',
+  			'amtme-blue-light': '#0065FF',
+  			'amtme-blue-dark': '#022367',
+  			'amtme-yellow': '#FEE906',
+  			'amtme-gray': '#F7F7F7',
+  			'amtme-black': '#1A1A1A',
+  			'amtme-gradient-start': '#0147FE',
+  			'amtme-gradient-mid': '#0065FF',
+  			'amtme-gradient-end': '#028BFD',
   			border: 'hsl(var(--border))',
   			input: 'hsl(var(--input))',
   			ring: 'hsl(var(--ring))',
