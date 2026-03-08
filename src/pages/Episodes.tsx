@@ -1,18 +1,17 @@
 import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
-import { Mic, Plus } from "lucide-react";
+import { Mic, Plus, Search, Filter, MoreVertical, Calendar } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 export default function Episodes() {
   const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState("");
   const queryClient = useQueryClient();
 
   const { data: episodes = [], isLoading } = useQuery({
@@ -46,24 +45,42 @@ export default function Episodes() {
     onError: (e) => toast.error(e.message),
   });
 
-  const statusColor = (s: string) => {
-    switch(s) {
-      case "published": return "default";
-      case "recording": return "secondary";
-      default: return "outline" as const;
+  const getStatusStyle = (status: string | null) => {
+    switch (status) {
+      case "published": return "text-[hsl(var(--chart-2))] bg-[hsl(var(--chart-2)/0.1)] border-[hsl(var(--chart-2)/0.2)]";
+      case "draft": return "text-muted-foreground bg-muted border-border";
+      case "recording": return "text-[hsl(var(--chart-1))] bg-[hsl(var(--chart-1)/0.1)] border-[hsl(var(--chart-1)/0.2)]";
+      default: return "text-[hsl(var(--chart-3))] bg-[hsl(var(--chart-3)/0.1)] border-[hsl(var(--chart-3)/0.2)]";
     }
   };
 
+  const statusLabel = (s: string | null) => {
+    switch (s) {
+      case "published": return "Publicado";
+      case "recording": return "Grabando";
+      case "editing": return "En edición";
+      default: return "Borrador";
+    }
+  };
+
+  const filtered = episodes.filter((ep: any) =>
+    !search || ep.title?.toLowerCase().includes(search.toLowerCase()) || ep.number?.includes(search) || ep.theme?.toLowerCase().includes(search.toLowerCase())
+  );
+
   return (
-    <div className="page-container animate-fade-in">
-      <div className="flex items-center justify-between">
+    <div className="p-6 lg:p-8 h-full flex flex-col animate-fade-in">
+      {/* Header */}
+      <div className="flex justify-between items-center mb-8">
         <div>
           <h1 className="page-title">Episodios</h1>
-          <p className="page-subtitle">Gestiona tus episodios de podcast</p>
+          <p className="page-subtitle">Gestiona la producción y publicación de tus episodios.</p>
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
-            <Button><Plus className="h-4 w-4 mr-2" />Nuevo episodio</Button>
+            <Button>
+              <Plus className="h-4 w-4 mr-2" />
+              Nuevo Episodio
+            </Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader><DialogTitle>Nuevo episodio</DialogTitle></DialogHeader>
@@ -78,29 +95,71 @@ export default function Episodes() {
         </Dialog>
       </div>
 
+      {/* Search */}
+      <div className="flex gap-4 mb-6">
+        <div className="relative flex-1 max-w-md">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input
+            placeholder="Buscar por título, número o tema..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="pl-10"
+          />
+        </div>
+      </div>
+
+      {/* Table */}
       {isLoading ? (
-        <div className="space-y-3">{[1,2,3].map(i => <Card key={i} className="h-20 animate-pulse bg-muted" />)}</div>
-      ) : episodes.length === 0 ? (
-        <div className="empty-state">
+        <div className="space-y-3">{[1, 2, 3].map(i => <div key={i} className="h-16 animate-pulse bg-muted rounded-lg" />)}</div>
+      ) : filtered.length === 0 ? (
+        <div className="empty-state flex-1">
           <Mic className="h-12 w-12 text-muted-foreground/30 mb-3" />
-          <p className="text-muted-foreground">No hay episodios aún</p>
+          <p className="text-muted-foreground">{search ? "Sin resultados" : "No hay episodios aún"}</p>
         </div>
       ) : (
-        <div className="space-y-3">
-          {episodes.map((ep: any) => (
-            <Card key={ep.id} className="hover:shadow-md transition-shadow">
-              <CardContent className="flex items-center justify-between py-4">
-                <div>
-                  <div className="flex items-center gap-2">
-                    {ep.number && <span className="text-xs text-muted-foreground font-mono">#{ep.number}</span>}
-                    <span className="font-medium">{ep.title}</span>
-                  </div>
-                  {ep.theme && <p className="text-sm text-muted-foreground mt-1">{ep.theme}</p>}
-                </div>
-                <Badge variant={statusColor(ep.status)}>{ep.status}</Badge>
-              </CardContent>
-            </Card>
-          ))}
+        <div className="surface flex-1 overflow-hidden flex flex-col">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm whitespace-nowrap">
+              <thead className="bg-secondary/50 text-muted-foreground border-b border-border">
+                <tr>
+                  <th className="px-6 py-4 font-medium">Episodio</th>
+                  <th className="px-6 py-4 font-medium">Tema</th>
+                  <th className="px-6 py-4 font-medium">Estado</th>
+                  <th className="px-6 py-4 font-medium">Lanzamiento</th>
+                  <th className="px-6 py-4 font-medium">Duración</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {filtered.map((ep: any) => (
+                  <tr key={ep.id} className="surface-hover">
+                    <td className="px-6 py-4">
+                      <div className="flex flex-col">
+                        <span className="font-medium text-foreground">{ep.title}</span>
+                        {ep.number && <span className="text-xs text-muted-foreground mt-0.5">#{ep.number}</span>}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 text-foreground">{ep.theme || "—"}</td>
+                    <td className="px-6 py-4">
+                      <span className={`px-2.5 py-1 rounded-full text-xs font-medium border ${getStatusStyle(ep.status)}`}>
+                        {statusLabel(ep.status)}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      {ep.release_date ? (
+                        <div className="flex items-center gap-2 text-foreground">
+                          <Calendar className="w-4 h-4 text-muted-foreground" />
+                          {ep.release_date}
+                        </div>
+                      ) : (
+                        <span className="text-muted-foreground">—</span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 text-muted-foreground">{ep.duration || "—"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
     </div>
