@@ -163,6 +163,7 @@ export default function PromptBuilder() {
 
   const reset = () => {
     setSelections({});
+    setCustomPrompt("");
     toast("Selecciones limpiadas");
   };
 
