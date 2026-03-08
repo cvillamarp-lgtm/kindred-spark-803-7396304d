@@ -122,6 +122,7 @@ export default function Episodes() {
             <table className="w-full text-left text-sm whitespace-nowrap">
               <thead className="bg-secondary/50 text-muted-foreground border-b border-border">
                 <tr>
+                  <th className="px-6 py-4 font-medium">Portada</th>
                   <th className="px-6 py-4 font-medium">Episodio</th>
                   <th className="px-6 py-4 font-medium">Tema</th>
                   <th className="px-6 py-4 font-medium">Estado</th>
