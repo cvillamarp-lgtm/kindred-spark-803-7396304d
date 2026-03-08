@@ -142,6 +142,7 @@ export type Database = {
       }
       episodes: {
         Row: {
+          cover_image_url: string | null
           created_at: string
           cta: string | null
           distribution_status: string | null
@@ -163,6 +164,7 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
+          cover_image_url?: string | null
           created_at?: string
           cta?: string | null
           distribution_status?: string | null
@@ -184,6 +186,7 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
+          cover_image_url?: string | null
           created_at?: string
           cta?: string | null
           distribution_status?: string | null
