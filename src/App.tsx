@@ -11,10 +11,14 @@ import Index from "./pages/Index";
 import Audience from "./pages/Audience";
 import EditorialCalendar from "./pages/EditorialCalendar";
 import Episodes from "./pages/Episodes";
+import Guests from "./pages/Guests";
 import BrandStudio from "./pages/BrandStudio";
 import DesignStudio from "./pages/DesignStudio";
 import PromptBuilder from "./pages/PromptBuilder";
+import ScriptGenerator from "./pages/ScriptGenerator";
+import Templates from "./pages/Templates";
 import MetricsPage from "./pages/Metrics";
+import Mentions from "./pages/Mentions";
 import Resources from "./pages/Resources";
 import Scorecard from "./pages/Scorecard";
 import Tasks from "./pages/Tasks";
@@ -46,10 +50,14 @@ const App = () => (
                     <Route path="/audience" element={<Audience />} />
                     <Route path="/calendar" element={<EditorialCalendar />} />
                     <Route path="/episodes" element={<Episodes />} />
+                    <Route path="/guests" element={<Guests />} />
                     <Route path="/brand" element={<BrandStudio />} />
                     <Route path="/design" element={<DesignStudio />} />
                     <Route path="/prompts" element={<PromptBuilder />} />
+                    <Route path="/scripts" element={<ScriptGenerator />} />
+                    <Route path="/templates" element={<Templates />} />
                     <Route path="/metrics" element={<MetricsPage />} />
+                    <Route path="/mentions" element={<Mentions />} />
                     <Route path="/resources" element={<Resources />} />
                     <Route path="/scorecard" element={<Scorecard />} />
                     <Route path="/tasks" element={<Tasks />} />
