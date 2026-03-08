@@ -1,4 +1,5 @@
-import { Home, Users, Calendar, Mic, Image, BookOpen, BarChart3, FileText, Settings, ListTodo, Wand2 } from "lucide-react";
+import { Home, Users, Calendar, Mic, Image, BookOpen, BarChart3, FileText, Settings, ListTodo, Wand2, LogOut } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
 import {
