@@ -134,6 +134,15 @@ export default function Episodes() {
                 {filtered.map((ep: any) => (
                   <tr key={ep.id} className="surface-hover">
                     <td className="px-6 py-4">
+                      {(ep as any).cover_image_url ? (
+                        <img src={(ep as any).cover_image_url} alt="Cover" className="w-10 h-10 rounded-md object-cover border border-border" />
+                      ) : (
+                        <div className="w-10 h-10 rounded-md bg-secondary flex items-center justify-center">
+                          <Mic className="w-4 h-4 text-muted-foreground" />
+                        </div>
+                      )}
+                    </td>
+                    <td className="px-6 py-4">
                       <div className="flex flex-col">
                         <span className="font-medium text-foreground">{ep.title}</span>
                         {ep.number && <span className="text-xs text-muted-foreground mt-0.5">#{ep.number}</span>}
