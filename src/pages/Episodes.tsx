@@ -122,6 +122,7 @@ export default function Episodes() {
             <table className="w-full text-left text-sm whitespace-nowrap">
               <thead className="bg-secondary/50 text-muted-foreground border-b border-border">
                 <tr>
+                  <th className="px-6 py-4 font-medium">Portada</th>
                   <th className="px-6 py-4 font-medium">Episodio</th>
                   <th className="px-6 py-4 font-medium">Tema</th>
                   <th className="px-6 py-4 font-medium">Estado</th>
@@ -132,6 +133,15 @@ export default function Episodes() {
               <tbody className="divide-y divide-border">
                 {filtered.map((ep: any) => (
                   <tr key={ep.id} className="surface-hover">
+                    <td className="px-6 py-4">
+                      {(ep as any).cover_image_url ? (
+                        <img src={(ep as any).cover_image_url} alt="Cover" className="w-10 h-10 rounded-md object-cover border border-border" />
+                      ) : (
+                        <div className="w-10 h-10 rounded-md bg-secondary flex items-center justify-center">
+                          <Mic className="w-4 h-4 text-muted-foreground" />
+                        </div>
+                      )}
+                    </td>
                     <td className="px-6 py-4">
                       <div className="flex flex-col">
                         <span className="font-medium text-foreground">{ep.title}</span>
