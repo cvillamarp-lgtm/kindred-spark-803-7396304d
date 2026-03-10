@@ -38,7 +38,7 @@ const Dashboard = () => {
     queryKey: ["dashboard-tasks"],
     queryFn: async () => {
       const { data } = await supabase.from("tasks").select("id, title, priority, category").eq("status", "todo").order("created_at", { ascending: false }).limit(5);
-      return data || [];
+      return (data || []) as Pick<Tables<"tasks">, "id" | "title" | "priority" | "category">[];
     },
   });
 
