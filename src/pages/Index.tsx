@@ -12,7 +12,7 @@ const Dashboard = () => {
     queryKey: ["dashboard-episodes"],
     queryFn: async () => {
       const { data } = await supabase.from("episodes").select("id, title, number, status, release_date").order("created_at", { ascending: false }).limit(5);
-      return data || [];
+      return (data || []) as Pick<Tables<"episodes">, "id" | "title" | "number" | "status" | "release_date">[];
     },
   });
 
