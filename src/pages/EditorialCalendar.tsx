@@ -104,7 +104,7 @@ export default function EditorialCalendar() {
                     {format(day, "d")}
                   </span>
                   <div className="mt-1 space-y-1">
-                    {dayEpisodes.map((ep: any) => (
+                    {dayEpisodes.map((ep) => (
                       <div
                         key={ep.id}
                         className="flex items-center gap-1.5 bg-secondary/60 rounded px-1.5 py-1 cursor-default"
