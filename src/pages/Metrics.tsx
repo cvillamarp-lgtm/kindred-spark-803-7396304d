@@ -21,7 +21,7 @@ export default function MetricsPage() {
     queryFn: async () => {
       const { data, error } = await supabase.from("metrics").select("*").order("date", { ascending: true });
       if (error) throw error;
-      return data;
+      return data as Tables<"metrics">[];
     },
   });
 
