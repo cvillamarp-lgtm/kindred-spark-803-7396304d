@@ -79,7 +79,7 @@ export default function Resources() {
         </div>
       ) : (
         <div className="space-y-3">
-          {resources.map((r: any) => (
+          {resources.map((r) => (
             <Card key={r.id}>
               <CardContent className="flex items-center justify-between py-4">
                 <div>

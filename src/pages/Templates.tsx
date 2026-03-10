@@ -96,7 +96,7 @@ export default function Templates() {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {templates.map((t: any) => (
+          {templates.map((t) => (
             <Card key={t.id} className="group">
               <CardHeader className="pb-2">
                 <div className="flex items-start justify-between">

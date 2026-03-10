@@ -132,7 +132,7 @@ const Dashboard = () => {
           <EmptyState icon={ListTodo} message="No hay tareas pendientes" className="py-12" />
         ) : (
           <div className="divide-y divide-border">
-            {pendingTasks.map((t: any) => (
+            {pendingTasks.map((t) => (
               <div key={t.id} className="p-5 flex items-center justify-between surface-hover">
                 <div className="flex items-center gap-4">
                   <ListTodo className="w-5 h-5 text-muted-foreground" />

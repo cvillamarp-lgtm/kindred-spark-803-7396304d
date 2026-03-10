@@ -102,7 +102,7 @@ export default function Audience() {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {members.map((m: any) => (
+          {members.map((m) => (
             <Card key={m.id}>
               <CardHeader><CardTitle className="text-base">{m.name}</CardTitle></CardHeader>
               <CardContent className="text-sm text-muted-foreground space-y-1">

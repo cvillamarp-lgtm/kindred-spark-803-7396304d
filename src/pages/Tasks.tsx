@@ -106,7 +106,7 @@ export default function Tasks() {
         </div>
       ) : (
         <div className="space-y-2">
-          {tasks.map((t: any) => (
+          {tasks.map((t) => (
             <Card key={t.id} className={t.status === "done" ? "opacity-60" : ""}>
               <CardContent className="flex items-center gap-3 py-3">
                 <Checkbox

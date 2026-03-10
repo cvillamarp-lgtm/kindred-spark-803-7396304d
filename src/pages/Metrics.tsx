@@ -192,7 +192,7 @@ export default function MetricsPage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border">
-                    {[...metrics].reverse().slice(0, 20).map((m: any) => (
+                    {[...metrics].reverse().slice(0, 20).map((m) => (
                       <tr key={m.id} className="surface-hover">
                         <td className="py-2 px-3 text-foreground">{m.name}</td>
                         <td className="py-2 px-3 text-foreground">{m.value} {m.unit || ""}</td>

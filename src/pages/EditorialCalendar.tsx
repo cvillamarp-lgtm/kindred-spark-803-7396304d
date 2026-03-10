@@ -134,9 +134,9 @@ export default function EditorialCalendar() {
           ) : (
             <div className="space-y-2">
               {episodes
-                .filter((ep: any) => ep.release_date && ep.release_date >= format(new Date(), "yyyy-MM-dd"))
+                .filter((ep) => ep.release_date && ep.release_date >= format(new Date(), "yyyy-MM-dd"))
                 .slice(0, 5)
-                .map((ep: any) => (
+                .map((ep) => (
                   <div key={ep.id} className="flex items-center gap-3 py-2 px-3 rounded-lg surface-hover">
                     <Mic className="w-4 h-4 text-primary flex-shrink-0" />
                     <div className="flex-1 min-w-0">

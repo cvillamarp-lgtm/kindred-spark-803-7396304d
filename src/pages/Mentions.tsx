@@ -106,7 +106,7 @@ export default function Mentions() {
         </div>
       ) : (
         <div className="space-y-3">
-          {mentions.map((m: any) => (
+          {mentions.map((m) => (
             <Card key={m.id}>
               <CardContent className="flex items-center gap-4 py-4">
                 <div className={`w-10 h-10 rounded-full bg-secondary flex items-center justify-center ${platformIcon(m.platform)}`}>

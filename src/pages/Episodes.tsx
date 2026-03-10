@@ -132,11 +132,11 @@ export default function Episodes() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
-                {filtered.map((ep: any) => (
+                {filtered.map((ep) => (
                   <tr key={ep.id} className="surface-hover">
                     <td className="px-6 py-4">
-                      {(ep as any).cover_image_url ? (
-                        <img src={(ep as any).cover_image_url} alt="Cover" className="w-10 h-10 rounded-md object-cover border border-border" />
+                      {ep.cover_image_url ? (
+                        <img src={ep.cover_image_url} alt="Cover" className="w-10 h-10 rounded-md object-cover border border-border" />
                       ) : (
                         <div className="w-10 h-10 rounded-md bg-secondary flex items-center justify-center">
                           <Mic className="w-4 h-4 text-muted-foreground" />

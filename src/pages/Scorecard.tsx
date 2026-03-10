@@ -118,7 +118,7 @@ export default function Scorecard() {
                       return (
                         <div key={item.label} className="flex items-center gap-2 text-sm">
                           {passed ? (
-                            <CheckCircle className="w-4 h-4 text-chart-2 shrink-0" />
+                            <CheckCircle className="w-4 h-4 text-[hsl(var(--chart-2))] shrink-0" />
                           ) : (
                             <AlertCircle className="w-4 h-4 text-muted-foreground/40 shrink-0" />
                           )}
