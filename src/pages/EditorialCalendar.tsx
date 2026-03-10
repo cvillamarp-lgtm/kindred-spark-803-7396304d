@@ -26,8 +26,8 @@ export default function EditorialCalendar() {
   const startDay = getDay(monthStart); // 0=Sun
 
   const episodesByDate = useMemo(() => {
-    const map: Record<string, any[]> = {};
-    episodes.forEach((ep: any) => {
+    const map: Record<string, Tables<"episodes">[]> = {};
+    episodes.forEach((ep) => {
       if (ep.release_date) {
         const key = ep.release_date.split("T")[0];
         if (!map[key]) map[key] = [];
