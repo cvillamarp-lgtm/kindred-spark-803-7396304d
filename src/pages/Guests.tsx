@@ -70,7 +70,7 @@ export default function Guests() {
     }
   };
 
-  const filtered = guests.filter((g: any) =>
+  const filtered = guests.filter((g) =>
     !search || g.name?.toLowerCase().includes(search.toLowerCase()) || g.role?.toLowerCase().includes(search.toLowerCase())
   );
 
