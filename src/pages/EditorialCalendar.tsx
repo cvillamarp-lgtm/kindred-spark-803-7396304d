@@ -126,7 +126,7 @@ export default function EditorialCalendar() {
       <Card>
         <CardHeader><CardTitle className="text-sm">Próximos lanzamientos</CardTitle></CardHeader>
         <CardContent>
-          {episodes.filter((ep: any) => ep.release_date && ep.release_date >= format(new Date(), "yyyy-MM-dd")).length === 0 ? (
+          {episodes.filter((ep) => ep.release_date && ep.release_date >= format(new Date(), "yyyy-MM-dd")).length === 0 ? (
             <div className="text-center py-6">
               <Calendar className="h-8 w-8 text-muted-foreground/30 mx-auto mb-2" />
               <p className="text-sm text-muted-foreground">No hay episodios programados</p>
