@@ -65,8 +65,8 @@ export default function MetricsPage() {
   });
 
   // Chart data: downloads over time
-  const downloadsData = (grouped["Descargas"] || grouped["descargas"] || metrics.filter((m: any) => m.name?.toLowerCase().includes("descarga")))
-    ?.map((m: any) => ({ date: m.date, value: m.value })) || [];
+  const downloadsData = (grouped["Descargas"] || grouped["descargas"] || metrics.filter((m) => m.name?.toLowerCase().includes("descarga")))
+    ?.map((m) => ({ date: m.date, value: m.value })) || [];
 
   return (
     <div className="page-container animate-fade-in">
