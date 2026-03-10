@@ -5,6 +5,7 @@ import { Link } from "react-router-dom";
 import { PageHeader } from "@/components/PageHeader";
 import { EmptyState } from "@/components/EmptyState";
 import { LoadingSkeleton } from "@/components/LoadingSkeleton";
+import type { Tables } from "@/integrations/supabase/types";
 
 const Dashboard = () => {
   const { data: episodes = [], isLoading: loadingEpisodes } = useQuery({
