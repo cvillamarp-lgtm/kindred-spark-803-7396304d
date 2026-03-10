@@ -49,18 +49,18 @@ export default function MetricsPage() {
   });
 
   // Group metrics by name for summary cards
-  const grouped = metrics.reduce((acc: Record<string, any[]>, m: any) => {
+  const grouped = metrics.reduce<Record<string, Tables<"metrics">[]>>((acc, m) => {
     const key = m.name || "Sin nombre";
     if (!acc[key]) acc[key] = [];
     acc[key].push(m);
     return acc;
   }, {});
 
-  const summaryCards = Object.entries(grouped).map(([name, items]: [string, any[]]) => {
+  const summaryCards = Object.entries(grouped).map(([name, items]) => {
     const sorted = [...items].sort((a, b) => (a.date || "").localeCompare(b.date || ""));
     const latest = sorted[sorted.length - 1];
     const prev = sorted.length > 1 ? sorted[sorted.length - 2] : null;
-    const change = prev && prev.value ? ((latest.value - prev.value) / prev.value * 100) : 0;
+    const change = prev && prev.value && latest.value ? ((latest.value - prev.value) / prev.value * 100) : 0;
     return { name, value: latest.value, unit: latest.unit, change, source: latest.source, data: sorted };
   });
 
