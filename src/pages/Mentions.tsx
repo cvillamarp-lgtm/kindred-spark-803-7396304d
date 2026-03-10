@@ -21,7 +21,7 @@ export default function Mentions() {
     queryFn: async () => {
       const { data, error } = await supabase.from("mentions").select("*").order("created_at", { ascending: false });
       if (error) throw error;
-      return data;
+      return data as Tables<"mentions">[];
     },
   });
 
