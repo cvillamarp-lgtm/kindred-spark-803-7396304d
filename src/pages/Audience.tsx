@@ -21,7 +21,7 @@ export default function Audience() {
     queryFn: async () => {
       const { data, error } = await supabase.from("audience_members").select("*").order("created_at", { ascending: false });
       if (error) throw error;
-      return data;
+      return data as Tables<"audience_members">[];
     },
   });
 
