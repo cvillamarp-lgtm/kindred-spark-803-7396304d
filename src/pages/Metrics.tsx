@@ -161,15 +161,15 @@ export default function MetricsPage() {
                     <AreaChart data={downloadsData}>
                       <defs>
                         <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="hsl(217, 91%, 60%)" stopOpacity={0.3} />
-                          <stop offset="95%" stopColor="hsl(217, 91%, 60%)" stopOpacity={0} />
+                          <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
+                          <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
                         </linearGradient>
                       </defs>
-                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(228, 14%, 13%)" />
-                      <XAxis dataKey="date" tick={{ fill: "hsl(228, 8%, 50%)", fontSize: 11 }} />
-                      <YAxis tick={{ fill: "hsl(228, 8%, 50%)", fontSize: 11 }} />
-                      <Tooltip contentStyle={{ background: "hsl(230, 18%, 6%)", border: "1px solid hsl(228, 14%, 13%)", borderRadius: "8px", color: "hsl(230, 20%, 92%)" }} />
-                      <Area type="monotone" dataKey="value" stroke="hsl(217, 91%, 60%)" fill="url(#colorValue)" strokeWidth={2} />
+                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                      <XAxis dataKey="date" tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }} />
+                      <YAxis tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }} />
+                      <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "8px", color: "hsl(var(--foreground))" }} />
+                      <Area type="monotone" dataKey="value" stroke="hsl(var(--primary))" fill="url(#colorValue)" strokeWidth={2} />
                     </AreaChart>
                   </ResponsiveContainer>
                 </div>
