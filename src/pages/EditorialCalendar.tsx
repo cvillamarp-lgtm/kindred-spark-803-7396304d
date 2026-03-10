@@ -16,7 +16,7 @@ export default function EditorialCalendar() {
     queryFn: async () => {
       const { data, error } = await supabase.from("episodes").select("*").order("release_date", { ascending: true });
       if (error) throw error;
-      return data;
+      return data as Tables<"episodes">[];
     },
   });
 
