@@ -5,13 +5,14 @@ import { Link } from "react-router-dom";
 import { PageHeader } from "@/components/PageHeader";
 import { EmptyState } from "@/components/EmptyState";
 import { LoadingSkeleton } from "@/components/LoadingSkeleton";
+import type { Tables } from "@/integrations/supabase/types";
 
 const Dashboard = () => {
   const { data: episodes = [], isLoading: loadingEpisodes } = useQuery({
     queryKey: ["dashboard-episodes"],
     queryFn: async () => {
       const { data } = await supabase.from("episodes").select("id, title, number, status, release_date").order("created_at", { ascending: false }).limit(5);
-      return data || [];
+      return (data || []) as Pick<Tables<"episodes">, "id" | "title" | "number" | "status" | "release_date">[];
     },
   });
 
@@ -37,7 +38,7 @@ const Dashboard = () => {
     queryKey: ["dashboard-tasks"],
     queryFn: async () => {
       const { data } = await supabase.from("tasks").select("id, title, priority, category").eq("status", "todo").order("created_at", { ascending: false }).limit(5);
-      return data || [];
+      return (data || []) as Pick<Tables<"tasks">, "id" | "title" | "priority" | "category">[];
     },
   });
 
@@ -98,7 +99,7 @@ const Dashboard = () => {
           <EmptyState icon={Mic} message="No hay episodios aún" className="py-12" />
         ) : (
           <div className="divide-y divide-border">
-            {episodes.map((ep: any) => {
+            {episodes.map((ep) => {
               const status = statusLabel(ep.status);
               return (
                 <div key={ep.id} className="p-5 flex items-center justify-between surface-hover">
@@ -131,7 +132,7 @@ const Dashboard = () => {
           <EmptyState icon={ListTodo} message="No hay tareas pendientes" className="py-12" />
         ) : (
           <div className="divide-y divide-border">
-            {pendingTasks.map((t: any) => (
+            {pendingTasks.map((t) => (
               <div key={t.id} className="p-5 flex items-center justify-between surface-hover">
                 <div className="flex items-center gap-4">
                   <ListTodo className="w-5 h-5 text-muted-foreground" />

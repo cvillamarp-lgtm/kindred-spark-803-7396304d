@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Calendar, ChevronLeft, ChevronRight, Mic } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import type { Tables } from "@/integrations/supabase/types";
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, getDay, addMonths, subMonths, isSameMonth, isToday, isSameDay, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
 
@@ -15,7 +16,7 @@ export default function EditorialCalendar() {
     queryFn: async () => {
       const { data, error } = await supabase.from("episodes").select("*").order("release_date", { ascending: true });
       if (error) throw error;
-      return data;
+      return data as Tables<"episodes">[];
     },
   });
 
@@ -25,8 +26,8 @@ export default function EditorialCalendar() {
   const startDay = getDay(monthStart); // 0=Sun
 
   const episodesByDate = useMemo(() => {
-    const map: Record<string, any[]> = {};
-    episodes.forEach((ep: any) => {
+    const map: Record<string, Tables<"episodes">[]> = {};
+    episodes.forEach((ep) => {
       if (ep.release_date) {
         const key = ep.release_date.split("T")[0];
         if (!map[key]) map[key] = [];
@@ -103,7 +104,7 @@ export default function EditorialCalendar() {
                     {format(day, "d")}
                   </span>
                   <div className="mt-1 space-y-1">
-                    {dayEpisodes.map((ep: any) => (
+                    {dayEpisodes.map((ep) => (
                       <div
                         key={ep.id}
                         className="flex items-center gap-1.5 bg-secondary/60 rounded px-1.5 py-1 cursor-default"
@@ -125,7 +126,7 @@ export default function EditorialCalendar() {
       <Card>
         <CardHeader><CardTitle className="text-sm">Próximos lanzamientos</CardTitle></CardHeader>
         <CardContent>
-          {episodes.filter((ep: any) => ep.release_date && ep.release_date >= format(new Date(), "yyyy-MM-dd")).length === 0 ? (
+          {episodes.filter((ep) => ep.release_date && ep.release_date >= format(new Date(), "yyyy-MM-dd")).length === 0 ? (
             <div className="text-center py-6">
               <Calendar className="h-8 w-8 text-muted-foreground/30 mx-auto mb-2" />
               <p className="text-sm text-muted-foreground">No hay episodios programados</p>
@@ -133,9 +134,9 @@ export default function EditorialCalendar() {
           ) : (
             <div className="space-y-2">
               {episodes
-                .filter((ep: any) => ep.release_date && ep.release_date >= format(new Date(), "yyyy-MM-dd"))
+                .filter((ep) => ep.release_date && ep.release_date >= format(new Date(), "yyyy-MM-dd"))
                 .slice(0, 5)
-                .map((ep: any) => (
+                .map((ep) => (
                   <div key={ep.id} className="flex items-center gap-3 py-2 px-3 rounded-lg surface-hover">
                     <Mic className="w-4 h-4 text-primary flex-shrink-0" />
                     <div className="flex-1 min-w-0">

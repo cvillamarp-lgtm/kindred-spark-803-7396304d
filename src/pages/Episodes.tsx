@@ -4,10 +4,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
-import { Mic, Plus, Search, Filter, MoreVertical, Calendar } from "lucide-react";
+import { Mic, Plus, Search, Calendar } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import type { Tables } from "@/integrations/supabase/types";
 
 export default function Episodes() {
   const [open, setOpen] = useState(false);
@@ -19,7 +20,7 @@ export default function Episodes() {
     queryFn: async () => {
       const { data, error } = await supabase.from("episodes").select("*").order("created_at", { ascending: false });
       if (error) throw error;
-      return data;
+      return data as Tables<"episodes">[];
     },
   });
 
@@ -63,7 +64,7 @@ export default function Episodes() {
     }
   };
 
-  const filtered = episodes.filter((ep: any) =>
+  const filtered = episodes.filter((ep) =>
     !search || ep.title?.toLowerCase().includes(search.toLowerCase()) || ep.number?.includes(search) || ep.theme?.toLowerCase().includes(search.toLowerCase())
   );
 
@@ -131,11 +132,11 @@ export default function Episodes() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
-                {filtered.map((ep: any) => (
+                {filtered.map((ep) => (
                   <tr key={ep.id} className="surface-hover">
                     <td className="px-6 py-4">
-                      {(ep as any).cover_image_url ? (
-                        <img src={(ep as any).cover_image_url} alt="Cover" className="w-10 h-10 rounded-md object-cover border border-border" />
+                      {ep.cover_image_url ? (
+                        <img src={ep.cover_image_url} alt="Cover" className="w-10 h-10 rounded-md object-cover border border-border" />
                       ) : (
                         <div className="w-10 h-10 rounded-md bg-secondary flex items-center justify-center">
                           <Mic className="w-4 h-4 text-muted-foreground" />

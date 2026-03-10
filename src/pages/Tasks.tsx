@@ -12,6 +12,7 @@ import { ListTodo, Plus } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import type { Tables } from "@/integrations/supabase/types";
 
 export default function Tasks() {
   const [open, setOpen] = useState(false);
@@ -22,7 +23,7 @@ export default function Tasks() {
     queryFn: async () => {
       const { data, error } = await supabase.from("tasks").select("*").order("created_at", { ascending: false });
       if (error) throw error;
-      return data;
+      return data as Tables<"tasks">[];
     },
   });
 
@@ -105,7 +106,7 @@ export default function Tasks() {
         </div>
       ) : (
         <div className="space-y-2">
-          {tasks.map((t: any) => (
+          {tasks.map((t) => (
             <Card key={t.id} className={t.status === "done" ? "opacity-60" : ""}>
               <CardContent className="flex items-center gap-3 py-3">
                 <Checkbox

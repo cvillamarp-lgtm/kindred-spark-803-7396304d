@@ -5,11 +5,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { BarChart3, Plus, TrendingUp, TrendingDown, Minus } from "lucide-react";
+import { BarChart3, Plus, TrendingUp, TrendingDown } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from "recharts";
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import type { Tables } from "@/integrations/supabase/types";
 
 export default function MetricsPage() {
   const [open, setOpen] = useState(false);
@@ -20,7 +21,7 @@ export default function MetricsPage() {
     queryFn: async () => {
       const { data, error } = await supabase.from("metrics").select("*").order("date", { ascending: true });
       if (error) throw error;
-      return data;
+      return data as Tables<"metrics">[];
     },
   });
 
@@ -48,24 +49,24 @@ export default function MetricsPage() {
   });
 
   // Group metrics by name for summary cards
-  const grouped = metrics.reduce((acc: Record<string, any[]>, m: any) => {
+  const grouped = metrics.reduce<Record<string, Tables<"metrics">[]>>((acc, m) => {
     const key = m.name || "Sin nombre";
     if (!acc[key]) acc[key] = [];
     acc[key].push(m);
     return acc;
   }, {});
 
-  const summaryCards = Object.entries(grouped).map(([name, items]: [string, any[]]) => {
+  const summaryCards = Object.entries(grouped).map(([name, items]) => {
     const sorted = [...items].sort((a, b) => (a.date || "").localeCompare(b.date || ""));
     const latest = sorted[sorted.length - 1];
     const prev = sorted.length > 1 ? sorted[sorted.length - 2] : null;
-    const change = prev && prev.value ? ((latest.value - prev.value) / prev.value * 100) : 0;
+    const change = prev && prev.value && latest.value ? ((latest.value - prev.value) / prev.value * 100) : 0;
     return { name, value: latest.value, unit: latest.unit, change, source: latest.source, data: sorted };
   });
 
   // Chart data: downloads over time
-  const downloadsData = (grouped["Descargas"] || grouped["descargas"] || metrics.filter((m: any) => m.name?.toLowerCase().includes("descarga")))
-    ?.map((m: any) => ({ date: m.date, value: m.value })) || [];
+  const downloadsData = (grouped["Descargas"] || grouped["descargas"] || metrics.filter((m) => m.name?.toLowerCase().includes("descarga")))
+    ?.map((m) => ({ date: m.date, value: m.value })) || [];
 
   return (
     <div className="page-container animate-fade-in">
@@ -160,15 +161,15 @@ export default function MetricsPage() {
                     <AreaChart data={downloadsData}>
                       <defs>
                         <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="hsl(217, 91%, 60%)" stopOpacity={0.3} />
-                          <stop offset="95%" stopColor="hsl(217, 91%, 60%)" stopOpacity={0} />
+                          <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
+                          <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
                         </linearGradient>
                       </defs>
-                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(228, 14%, 13%)" />
-                      <XAxis dataKey="date" tick={{ fill: "hsl(228, 8%, 50%)", fontSize: 11 }} />
-                      <YAxis tick={{ fill: "hsl(228, 8%, 50%)", fontSize: 11 }} />
-                      <Tooltip contentStyle={{ background: "hsl(230, 18%, 6%)", border: "1px solid hsl(228, 14%, 13%)", borderRadius: "8px", color: "hsl(230, 20%, 92%)" }} />
-                      <Area type="monotone" dataKey="value" stroke="hsl(217, 91%, 60%)" fill="url(#colorValue)" strokeWidth={2} />
+                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                      <XAxis dataKey="date" tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }} />
+                      <YAxis tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }} />
+                      <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "8px", color: "hsl(var(--foreground))" }} />
+                      <Area type="monotone" dataKey="value" stroke="hsl(var(--primary))" fill="url(#colorValue)" strokeWidth={2} />
                     </AreaChart>
                   </ResponsiveContainer>
                 </div>
@@ -191,7 +192,7 @@ export default function MetricsPage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border">
-                    {[...metrics].reverse().slice(0, 20).map((m: any) => (
+                    {[...metrics].reverse().slice(0, 20).map((m) => (
                       <tr key={m.id} className="surface-hover">
                         <td className="py-2 px-3 text-foreground">{m.name}</td>
                         <td className="py-2 px-3 text-foreground">{m.value} {m.unit || ""}</td>

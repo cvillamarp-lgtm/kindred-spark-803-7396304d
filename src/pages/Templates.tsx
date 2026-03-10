@@ -9,6 +9,7 @@ import { FileText, Plus, Copy } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import type { Tables } from "@/integrations/supabase/types";
 
 export default function Templates() {
   const [open, setOpen] = useState(false);
@@ -19,7 +20,7 @@ export default function Templates() {
     queryFn: async () => {
       const { data, error } = await supabase.from("episode_templates").select("*").order("created_at", { ascending: false });
       if (error) throw error;
-      return data;
+      return data as Tables<"episode_templates">[];
     },
   });
 
@@ -47,7 +48,7 @@ export default function Templates() {
     onError: (e) => toast.error(e.message),
   });
 
-  const copyTemplate = (t: any) => {
+  const copyTemplate = (t: Tables<"episode_templates">) => {
     const text = [
       t.hook && `🎣 Hook: ${t.hook}`,
       t.body && `📝 Cuerpo: ${t.body}`,
@@ -95,7 +96,7 @@ export default function Templates() {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {templates.map((t: any) => (
+          {templates.map((t) => (
             <Card key={t.id} className="group">
               <CardHeader className="pb-2">
                 <div className="flex items-start justify-between">

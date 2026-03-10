@@ -9,6 +9,7 @@ import { FileText, Plus, ExternalLink } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import type { Tables } from "@/integrations/supabase/types";
 
 export default function Resources() {
   const [open, setOpen] = useState(false);
@@ -19,7 +20,7 @@ export default function Resources() {
     queryFn: async () => {
       const { data, error } = await supabase.from("resources").select("*").order("created_at", { ascending: false });
       if (error) throw error;
-      return data;
+      return data as Tables<"resources">[];
     },
   });
 
@@ -78,7 +79,7 @@ export default function Resources() {
         </div>
       ) : (
         <div className="space-y-3">
-          {resources.map((r: any) => (
+          {resources.map((r) => (
             <Card key={r.id}>
               <CardContent className="flex items-center justify-between py-4">
                 <div>

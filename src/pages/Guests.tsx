@@ -11,6 +11,7 @@ import { UserPlus, Plus, Search, Mail, Briefcase } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import type { Tables } from "@/integrations/supabase/types";
 
 export default function Guests() {
   const [open, setOpen] = useState(false);
@@ -22,7 +23,7 @@ export default function Guests() {
     queryFn: async () => {
       const { data, error } = await supabase.from("guests").select("*").order("created_at", { ascending: false });
       if (error) throw error;
-      return data;
+      return data as Tables<"guests">[];
     },
   });
 
@@ -69,7 +70,7 @@ export default function Guests() {
     }
   };
 
-  const filtered = guests.filter((g: any) =>
+  const filtered = guests.filter((g) =>
     !search || g.name?.toLowerCase().includes(search.toLowerCase()) || g.role?.toLowerCase().includes(search.toLowerCase())
   );
 
@@ -125,7 +126,7 @@ export default function Guests() {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filtered.map((g: any) => (
+          {filtered.map((g) => (
             <Card key={g.id}>
               <CardHeader className="pb-2">
                 <div className="flex items-start justify-between">

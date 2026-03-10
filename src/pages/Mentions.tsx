@@ -10,6 +10,7 @@ import { AtSign, Plus, ExternalLink } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import type { Tables } from "@/integrations/supabase/types";
 
 export default function Mentions() {
   const [open, setOpen] = useState(false);
@@ -20,7 +21,7 @@ export default function Mentions() {
     queryFn: async () => {
       const { data, error } = await supabase.from("mentions").select("*").order("created_at", { ascending: false });
       if (error) throw error;
-      return data;
+      return data as Tables<"mentions">[];
     },
   });
 
@@ -105,7 +106,7 @@ export default function Mentions() {
         </div>
       ) : (
         <div className="space-y-3">
-          {mentions.map((m: any) => (
+          {mentions.map((m) => (
             <Card key={m.id}>
               <CardContent className="flex items-center gap-4 py-4">
                 <div className={`w-10 h-10 rounded-full bg-secondary flex items-center justify-center ${platformIcon(m.platform)}`}>
