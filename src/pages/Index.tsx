@@ -99,7 +99,7 @@ const Dashboard = () => {
           <EmptyState icon={Mic} message="No hay episodios aún" className="py-12" />
         ) : (
           <div className="divide-y divide-border">
-            {episodes.map((ep: any) => {
+            {episodes.map((ep) => {
               const status = statusLabel(ep.status);
               return (
                 <div key={ep.id} className="p-5 flex items-center justify-between surface-hover">
