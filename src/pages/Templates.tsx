@@ -20,7 +20,7 @@ export default function Templates() {
     queryFn: async () => {
       const { data, error } = await supabase.from("episode_templates").select("*").order("created_at", { ascending: false });
       if (error) throw error;
-      return data;
+      return data as Tables<"episode_templates">[];
     },
   });
 
