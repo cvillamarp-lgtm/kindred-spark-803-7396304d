@@ -64,7 +64,7 @@ export default function Episodes() {
     }
   };
 
-  const filtered = episodes.filter((ep: any) =>
+  const filtered = episodes.filter((ep) =>
     !search || ep.title?.toLowerCase().includes(search.toLowerCase()) || ep.number?.includes(search) || ep.theme?.toLowerCase().includes(search.toLowerCase())
   );
 
