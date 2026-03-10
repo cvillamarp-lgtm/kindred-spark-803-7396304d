@@ -48,7 +48,7 @@ export default function Templates() {
     onError: (e) => toast.error(e.message),
   });
 
-  const copyTemplate = (t: any) => {
+  const copyTemplate = (t: Tables<"episode_templates">) => {
     const text = [
       t.hook && `🎣 Hook: ${t.hook}`,
       t.body && `📝 Cuerpo: ${t.body}`,
