@@ -1,15 +1,16 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Wand2, Copy, Check, RotateCcw, ImageIcon, Loader2, Download, Trash2, PenLine, Pencil, Link2, Upload, X, User } from "lucide-react";
+import { Wand2, Copy, Check, RotateCcw, ImageIcon, Loader2, Download, Trash2, PenLine, Pencil, Link2, Upload, X, User, Crown } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import hostPhoto from "@/assets/host-reference.png";
 
 const SECTIONS = [
   { id: "subject", label: "Sujeto", options: ["Hombre", "Mujer", "Pareja", "Grupo", "Producto", "Objeto", "Animal", "Personaje", "Figura abstracta"] },
@@ -51,7 +52,24 @@ export default function PromptBuilder() {
   const [selectedImage, setSelectedImage] = useState<GeneratedImage | null>(null);
   const [linkEpisodeId, setLinkEpisodeId] = useState<string>("");
   const [referenceImages, setReferenceImages] = useState<string[]>([]);
+  const [hostBase64, setHostBase64] = useState<string>("");
   const queryClient = useQueryClient();
+
+  // Convert host photo to base64 on mount
+  useEffect(() => {
+    const toBase64 = async () => {
+      try {
+        const res = await fetch(hostPhoto);
+        const blob = await res.blob();
+        const reader = new FileReader();
+        reader.onload = () => setHostBase64(reader.result as string);
+        reader.readAsDataURL(blob);
+      } catch (e) {
+        console.error("Error loading host photo:", e);
+      }
+    };
+    toBase64();
+  }, []);
 
   const handleReferenceUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -123,8 +141,9 @@ export default function PromptBuilder() {
     if (!prompt) { toast.error("Selecciona al menos un parámetro"); return; }
     setGenerating(true);
     try {
+      const allRefs = [hostBase64, ...referenceImages].filter(Boolean);
       const { data, error } = await supabase.functions.invoke("generate-image", {
-        body: { prompt, episodeId: linkEpisodeId || undefined, referenceImages: referenceImages.length > 0 ? referenceImages : undefined },
+        body: { prompt, episodeId: linkEpisodeId || undefined, referenceImages: allRefs },
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
@@ -150,8 +169,9 @@ export default function PromptBuilder() {
     if (!selectedImage || !editPrompt.trim()) { toast.error("Selecciona una imagen y describe los cambios"); return; }
     setEditing(true);
     try {
+      const allRefs = [hostBase64, ...referenceImages].filter(Boolean);
       const { data, error } = await supabase.functions.invoke("generate-image", {
-        body: { prompt: editPrompt, mode: "edit", imageUrl: selectedImage.url, episodeId: linkEpisodeId || undefined, referenceImages: referenceImages.length > 0 ? referenceImages : undefined },
+        body: { prompt: editPrompt, mode: "edit", imageUrl: selectedImage.url, episodeId: linkEpisodeId || undefined, referenceImages: allRefs },
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
@@ -253,9 +273,17 @@ export default function PromptBuilder() {
         </CardHeader>
         <CardContent className="space-y-3">
           <p className="text-xs text-muted-foreground">
-            Sube fotos de la persona que aparecerá en la imagen generada. El modelo usará estas referencias para mantener la apariencia.
+            La foto del host se incluye siempre. Puedes agregar más referencias de invitados o personas adicionales.
           </p>
           <div className="flex flex-wrap gap-3 items-start">
+            {/* Host - always present */}
+            <div className="relative w-20 h-20 rounded-lg overflow-hidden border-2 border-primary shadow-sm">
+              <img src={hostPhoto} alt="Host AMTME" className="w-full h-full object-cover" />
+              <span className="absolute bottom-0 left-0 right-0 bg-primary text-primary-foreground text-[9px] text-center py-0.5 font-medium flex items-center justify-center gap-0.5">
+                <Crown className="h-2.5 w-2.5" />Host
+              </span>
+            </div>
+            {/* Additional references */}
             {referenceImages.map((img, i) => (
               <div key={i} className="relative group w-20 h-20 rounded-lg overflow-hidden border border-border">
                 <img src={img} alt={`Ref ${i + 1}`} className="w-full h-full object-cover" />

@@ -45,11 +45,12 @@ serve(async (req) => {
     };
 
     if (mode === "edit" && editImageUrl) {
-      const editText = `${AMTME_BRAND_PROMPT}\n\n${referenceImages?.length ? "Use the reference photos to maintain the person's appearance. " : ""}Edit this image: ${prompt}`;
+      const editText = `${AMTME_BRAND_PROMPT}\n\nThe FIRST reference photo is ALWAYS the podcast host — he must appear in the image with his exact appearance, facial features, and build. ${referenceImages?.length > 1 ? "Additional reference photos show other people who should also appear. " : ""}Edit this image: ${prompt}`;
       messages = [{ role: "user", content: buildContentWithRefs(editText, editImageUrl) }];
     } else {
-      const refNote = referenceImages?.length ? "Use the reference photos provided to generate the person with that exact appearance. " : "";
-      const enhancedPrompt = `${AMTME_BRAND_PROMPT}\n\n${refNote}Create: ${prompt}. Professional podcast artwork, visually striking, modern design.`;
+      const hostNote = referenceImages?.length ? "The FIRST reference photo is ALWAYS the podcast host — generate the image featuring this exact person with his appearance, facial features, beard, and build. " : "";
+      const guestNote = referenceImages?.length > 1 ? "Additional reference photos show other people who should also appear in the image. " : "";
+      const enhancedPrompt = `${AMTME_BRAND_PROMPT}\n\n${hostNote}${guestNote}Create: ${prompt}. Professional podcast artwork, visually striking, modern design.`;
       messages = [{ role: "user", content: buildContentWithRefs(enhancedPrompt) }];
     }
 
