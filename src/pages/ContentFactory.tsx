@@ -358,27 +358,107 @@ export default function ContentFactory() {
     setProdCurrent(0);
 
     try {
-      // Step 1: Extract
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) throw new Error("Sesión expirada");
+
+      // Step 1: Extract content directly (not via extractContent which sets state)
       setProdStep("Extrayendo contenido...");
       setProdCurrent(1);
-      await extractContent();
+
+      const extractResp = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/extract-content`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({ script, title, theme }),
+        }
+      );
+
+      if (!extractResp.ok) {
+        const err = await extractResp.json().catch(() => ({ error: "Error desconocido" }));
+        throw new Error(err.error || `Error ${extractResp.status}`);
+      }
+
+      const rawData = await extractResp.json();
+      const parsed = parseExtraction(rawData);
+      if (!parsed) throw new Error("Respuesta incompleta de IA");
+
+      // Update state with extraction
+      setExtraction(parsed);
+      const epNum = epNumber.padStart(2, "0") || "XX";
+      const mergedCopy: PieceCopyMap = {};
+      for (const [k, v] of Object.entries(parsed.pieceCopy)) {
+        mergedCopy[k] = v.map((line: string) => line.replace(/XX/g, epNum));
+      }
+      setPieceCopy(mergedCopy);
+
+      const localEpisodeInput: EpisodeInput = {
+        number: epNumber || "XX",
+        thesis: parsed.thesis,
+        keyPhrases: parsed.keyPhrases,
+      };
 
       // Step 2: Generate captions
       setProdStep("Generando captions...");
       setProdCurrent(2);
-      await generateCaptions();
+
+      try {
+        const pieces = VISUAL_PIECES.map((p) => ({
+          id: p.id,
+          name: p.shortName,
+          copy: (mergedCopy[String(p.id)] || p.copyTemplate).join(" "),
+        }));
+
+        const captionResp = await fetch(
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-captions`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${session.access_token}`,
+            },
+            body: JSON.stringify({
+              pieces,
+              episodeTitle: title,
+              episodeNumber: epNumber,
+              thesis: parsed.thesis,
+            }),
+          }
+        );
+
+        if (captionResp.ok) {
+          const captionData = await captionResp.json();
+          if (captionData.captions && Array.isArray(captionData.captions)) {
+            setAssets((prev) => {
+              const next = { ...prev };
+              for (const c of captionData.captions) {
+                next[c.pieceId] = {
+                  ...next[c.pieceId],
+                  caption: c.caption || "",
+                  hashtags: c.hashtags || "",
+                  status: next[c.pieceId]?.status || "pending",
+                };
+              }
+              return next;
+            });
+          }
+        }
+      } catch (e) {
+        console.error("Caption generation error:", e);
+        // Continue even if captions fail
+      }
 
       // Step 3: Generate images one by one
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.access_token) throw new Error("Sesión expirada");
-
       for (let i = 0; i < VISUAL_PIECES.length; i++) {
         const piece = VISUAL_PIECES[i];
         setProdStep(`Generando imagen ${i + 1}/15: ${piece.shortName}`);
         setProdCurrent(3 + i);
 
-        const copy = pieceCopy[String(piece.id)] || piece.copyTemplate;
-        const prompt = buildPiecePrompt(piece, episodeInput, copy);
+        const copy = mergedCopy[String(piece.id)] || piece.copyTemplate;
+        const prompt = buildPiecePrompt(piece, localEpisodeInput, copy);
 
         try {
           const resp = await fetch(
@@ -405,7 +485,7 @@ export default function ContentFactory() {
           console.error(`Error en pieza ${piece.id}`);
         }
 
-        // Small delay to avoid rate limits
+        // Delay to avoid rate limits
         if (i < VISUAL_PIECES.length - 1) {
           await new Promise((r) => setTimeout(r, 2000));
         }
@@ -414,6 +494,8 @@ export default function ContentFactory() {
       // Save all
       setProdStep("Guardando assets...");
       setProdCurrent(17);
+      // Wait a tick for state to settle before saving
+      await new Promise((r) => setTimeout(r, 500));
       await saveToDatabase();
 
       setTab("library");
