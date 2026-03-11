@@ -282,6 +282,7 @@ export default function Episodes() {
                           if (ep.hook) params.set("hook", ep.hook);
                           if (ep.quote) params.set("quote", ep.quote);
                           if (ep.cta) params.set("cta", ep.cta);
+                          params.set("episode_id", ep.id);
                           navigate(`/factory?${params.toString()}`);
                         }}
                       >

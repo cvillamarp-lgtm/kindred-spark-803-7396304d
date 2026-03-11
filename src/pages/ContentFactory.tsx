@@ -614,12 +614,23 @@ export default function ContentFactory() {
                 disabled={producing || loading}
               >
                 <Zap className="h-3.5 w-3.5 mr-1.5" />
-                Producir Todo
+                Producir {selectedPieces.size < VISUAL_PIECES.length ? `(${selectedPieces.size})` : "Todo"}
               </Button>
             </>
           )}
         </div>
       </div>
+
+      {/* Piece selector */}
+      {extraction && (
+        <PieceSelector
+          pieces={VISUAL_PIECES}
+          selected={selectedPieces}
+          onToggle={togglePiece}
+          onSelectAll={selectAllPieces}
+          onSelectNone={selectNoPieces}
+        />
+      )}
 
       {/* Progress tracker */}
       <ProgressTracker
