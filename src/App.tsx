@@ -32,6 +32,7 @@ const Tasks = lazy(() => import("./pages/Tasks"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const VisualPromptGenerator = lazy(() => import("./pages/VisualPromptGenerator"));
 const ContentPipeline = lazy(() => import("./pages/ContentPipeline"));
+const Library = lazy(() => import("./pages/Library"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
