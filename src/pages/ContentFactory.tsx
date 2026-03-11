@@ -36,11 +36,37 @@ interface ExtractionResult {
 }
 
 export default function ContentFactory() {
+  const [searchParams] = useSearchParams();
+
   // --- Input state ---
   const [epNumber, setEpNumber] = useState("");
   const [title, setTitle] = useState("");
   const [theme, setTheme] = useState("");
   const [script, setScript] = useState("");
+
+  // Pre-fill from URL params (coming from Episodes page)
+  useEffect(() => {
+    const num = searchParams.get("number");
+    const t = searchParams.get("title");
+    const th = searchParams.get("theme");
+    const sc = searchParams.get("script");
+    const hook = searchParams.get("hook");
+    const quote = searchParams.get("quote");
+    const cta = searchParams.get("cta");
+
+    if (num) setEpNumber(num);
+    if (t) setTitle(t);
+    if (th) setTheme(th);
+
+    // Build script from available episode content
+    const parts = [
+      sc ? `Resumen: ${sc}` : "",
+      hook ? `Hook: ${hook}` : "",
+      quote ? `Quote: ${quote}` : "",
+      cta ? `CTA: ${cta}` : "",
+    ].filter(Boolean);
+    if (parts.length) setScript(parts.join("\n\n"));
+  }, [searchParams]);
 
   // --- Extraction state ---
   const [loading, setLoading] = useState(false);
