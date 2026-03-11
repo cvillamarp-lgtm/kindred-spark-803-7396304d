@@ -74,6 +74,7 @@ const App = () => (
                         <Route path="/design" element={<DesignStudio />} />
                         <Route path="/prompts" element={<PromptBuilder />} />
                         <Route path="/scripts" element={<ScriptGenerator />} />
+                        <Route path="/factory" element={<ContentFactory />} />
                         <Route path="/templates" element={<Templates />} />
                         <Route path="/metrics" element={<MetricsPage />} />
                         <Route path="/mentions" element={<Mentions />} />
