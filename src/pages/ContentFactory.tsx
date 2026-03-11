@@ -20,6 +20,7 @@ import { PieceCard } from "@/components/factory/PieceCard";
 import { CaptionEditor } from "@/components/factory/CaptionEditor";
 import { AssetGallery } from "@/components/factory/AssetGallery";
 import { ProgressTracker } from "@/components/factory/ProgressTracker";
+import { PieceSelector } from "@/components/factory/PieceSelector";
 
 type PieceCopyMap = Record<string, string[]>;
 
