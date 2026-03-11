@@ -142,68 +142,110 @@ export type Database = {
       }
       episodes: {
         Row: {
+          conflicto: boolean | null
+          conflicto_nota: string | null
           cover_image_url: string | null
           created_at: string
           cta: string | null
+          descripcion_spotify: string | null
           distribution_status: string | null
           duration: string | null
           editing_status: string | null
+          estado_validacion: string | null
+          fecha_es_estimada: boolean | null
           hook: string | null
           id: string
+          link_spotify: string | null
+          nivel_completitud: string | null
+          nota_trazabilidad: string | null
           number: string | null
           quote: string | null
           recording_status: string | null
           release_date: string | null
+          retencion_q1: number | null
+          retencion_q2: number | null
+          retencion_q3: number | null
+          retencion_q4: number | null
           script_status: string | null
           status: string | null
+          streams_total: number | null
           summary: string | null
           tags: string[] | null
           theme: string | null
           title: string
+          titulo_original: string | null
           updated_at: string
           user_id: string | null
         }
         Insert: {
+          conflicto?: boolean | null
+          conflicto_nota?: string | null
           cover_image_url?: string | null
           created_at?: string
           cta?: string | null
+          descripcion_spotify?: string | null
           distribution_status?: string | null
           duration?: string | null
           editing_status?: string | null
+          estado_validacion?: string | null
+          fecha_es_estimada?: boolean | null
           hook?: string | null
           id?: string
+          link_spotify?: string | null
+          nivel_completitud?: string | null
+          nota_trazabilidad?: string | null
           number?: string | null
           quote?: string | null
           recording_status?: string | null
           release_date?: string | null
+          retencion_q1?: number | null
+          retencion_q2?: number | null
+          retencion_q3?: number | null
+          retencion_q4?: number | null
           script_status?: string | null
           status?: string | null
+          streams_total?: number | null
           summary?: string | null
           tags?: string[] | null
           theme?: string | null
           title: string
+          titulo_original?: string | null
           updated_at?: string
           user_id?: string | null
         }
         Update: {
+          conflicto?: boolean | null
+          conflicto_nota?: string | null
           cover_image_url?: string | null
           created_at?: string
           cta?: string | null
+          descripcion_spotify?: string | null
           distribution_status?: string | null
           duration?: string | null
           editing_status?: string | null
+          estado_validacion?: string | null
+          fecha_es_estimada?: boolean | null
           hook?: string | null
           id?: string
+          link_spotify?: string | null
+          nivel_completitud?: string | null
+          nota_trazabilidad?: string | null
           number?: string | null
           quote?: string | null
           recording_status?: string | null
           release_date?: string | null
+          retencion_q1?: number | null
+          retencion_q2?: number | null
+          retencion_q3?: number | null
+          retencion_q4?: number | null
           script_status?: string | null
           status?: string | null
+          streams_total?: number | null
           summary?: string | null
           tags?: string[] | null
           theme?: string | null
           title?: string
+          titulo_original?: string | null
           updated_at?: string
           user_id?: string | null
         }
