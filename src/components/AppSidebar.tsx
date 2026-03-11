@@ -26,6 +26,7 @@ const mainNav = [
 const toolsNav = [
   { label: "Guiones IA", url: "/scripts", icon: Sparkles },
   { label: "Prompts", url: "/prompts", icon: Wand2 },
+  { label: "Visuales", url: "/visual-prompts", icon: Layers },
   { label: "Design", url: "/design", icon: BookOpen },
   { label: "Brand", url: "/brand", icon: Image },
 ];

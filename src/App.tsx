@@ -79,6 +79,7 @@ const App = () => (
                         <Route path="/resources" element={<Resources />} />
                         <Route path="/scorecard" element={<Scorecard />} />
                         <Route path="/tasks" element={<Tasks />} />
+                        <Route path="/visual-prompts" element={<VisualPromptGenerator />} />
                         <Route path="*" element={<NotFound />} />
                       </Routes>
                     </Suspense>
