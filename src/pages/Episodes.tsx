@@ -17,6 +17,7 @@ export default function Episodes() {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
 
   const { data: episodes = [], isLoading } = useQuery({
     queryKey: ["episodes"],
