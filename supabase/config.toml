@@ -1,7 +1,7 @@
 project_id = "knjhhmqthkpucfxpdhxj"
 
 [functions.generate-script]
-verify_jwt = false
+verify_jwt = true
 
 [functions.generate-image]
-verify_jwt = false
+verify_jwt = true

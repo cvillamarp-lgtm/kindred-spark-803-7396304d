@@ -1,73 +1,54 @@
-# Welcome to your Lovable project
+# AMTME OS — A Mi Tampoco Me Explicaron
 
-## Project info
+Sistema de gestión integral para la producción del podcast **AMTME**.
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+## Stack tecnológico
 
-## How can I edit this code?
+- React 18 + TypeScript + Vite
+- Supabase (Auth + Base de datos + Edge Functions)
+- TailwindCSS + shadcn/ui
+- TanStack React Query
 
-There are several ways of editing your application.
+## Funcionalidades
 
-**Use Lovable**
+- Dashboard con KPIs de producción
+- Gestión de episodios, invitados y tareas
+- Calendario editorial
+- Generador de guiones con IA (streaming)
+- Generador de prompts visuales
+- Brand Studio y Design Studio
+- Métricas, audiencia y menciones
+- Scorecard de rendimiento
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
+## Setup local
 
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
+### 1. Clonar el repositorio
 
 ```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+git clone https://github.com/cvillamarp-lgtm/kindred-spark-803-7396304d.git
+cd kindred-spark-803-7396304d
 ```
 
-**Edit a file directly in GitHub**
+### 2. Configurar variables de entorno
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+```sh
+cp .env.example .env
+```
 
-**Use GitHub Codespaces**
+Edita `.env` con tus credenciales de Supabase (disponibles en [dashboard.supabase.com](https://dashboard.supabase.com) → Settings → API).
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+### 3. Instalar dependencias
 
-## What technologies are used for this project?
+```sh
+bun install
+```
 
-This project is built with:
+### 4. Iniciar servidor de desarrollo
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+```sh
+bun run dev
+```
 
-## How can I deploy this project?
+## Despliegue
 
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+El proyecto se puede desplegar en [Lovable](https://lovable.dev) o cualquier plataforma compatible con Vite (Vercel, Netlify, etc.).
