@@ -358,13 +358,14 @@ ${copy}
 
 COMPOSICIÓN
 ${piece.compositionNotes}
+${BRAND_CONTEXT.composition.map((c) => `— ${c}`).join("\n")}
 
 CONTEXTO DE MARCA FIJO
 Podcast: ${BRAND_CONTEXT.podcast}
 Host: ${BRAND_CONTEXT.host}
 
 PALETA ÚNICA PERMITIDA
-INK ${BRAND_CONTEXT.palette.ink}  |  PAPER ${BRAND_CONTEXT.palette.paper}  |  COBALT ${BRAND_CONTEXT.palette.cobalt}  |  HIGHLIGHTER GREEN ${BRAND_CONTEXT.palette.green}
+COBALT ${BRAND_CONTEXT.palette.cobalt}  |  COBALT DARK ${BRAND_CONTEXT.palette.cobaltDark}  |  CREAM ${BRAND_CONTEXT.palette.cream}  |  AMARILLO ${BRAND_CONTEXT.palette.yellow}  |  NEGRO ${BRAND_CONTEXT.palette.black}  |  BLANCO ${BRAND_CONTEXT.palette.white}
 
 REGLAS DE COLOR
 ${BRAND_CONTEXT.colorRules.map((r) => `— ${r}`).join("\n")}
@@ -372,8 +373,11 @@ ${BRAND_CONTEXT.colorRules.map((r) => `— ${r}`).join("\n")}
 TIPOGRAFÍA
 ${BRAND_CONTEXT.typography.map((t) => `— ${t}`).join("\n")}
 
-HOST
+HOST (OBLIGATORIO — usar foto de referencia adjunta)
 — ${BRAND_CONTEXT.hostDescription}
+
+ELEMENTOS FIJOS
+${BRAND_CONTEXT.fixedElements.map((e) => `— ${e}`).join("\n")}
 
 ESTÉTICA OBLIGATORIA
 — ${BRAND_CONTEXT.aesthetic}
