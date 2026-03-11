@@ -5,9 +5,10 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
-import { Image, Download, CheckCircle2, Trash2, Search, Filter } from "lucide-react";
+import { Image, Download, CheckCircle2, Trash2, Search, Filter, Copy, Check } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { AssetPreviewModal } from "@/components/library/AssetPreviewModal";
 
 interface ContentAsset {
   id: string;
@@ -26,6 +27,8 @@ export default function Library() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("all");
   const [search, setSearch] = useState("");
+  const [previewAsset, setPreviewAsset] = useState<ContentAsset | null>(null);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
 
   const fetchAssets = async () => {
     setLoading(true);
@@ -68,6 +71,14 @@ export default function Library() {
       setAssets((prev) => prev.filter((a) => a.id !== id));
       toast.success("Asset eliminado");
     }
+  };
+
+  const copyCaption = (asset: ContentAsset) => {
+    const text = [asset.caption, asset.hashtags].filter(Boolean).join("\n\n");
+    navigator.clipboard.writeText(text);
+    setCopiedId(asset.id);
+    toast.success("Caption copiado");
+    setTimeout(() => setCopiedId(null), 2000);
   };
 
   const filtered = assets.filter((a) => {
@@ -134,7 +145,7 @@ export default function Library() {
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
           {filtered.map((asset) => (
-            <Card key={asset.id} className="overflow-hidden">
+            <Card key={asset.id} className="overflow-hidden group cursor-pointer" onClick={() => setPreviewAsset(asset)}>
               <div className="rounded-t-lg overflow-hidden border-b border-border">
                 <AspectRatio ratio={1}>
                   {asset.image_url ? (
@@ -142,6 +153,7 @@ export default function Library() {
                       src={asset.image_url}
                       alt={asset.piece_name}
                       className="w-full h-full object-cover"
+                      loading="lazy"
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center bg-secondary/30">
@@ -160,7 +172,7 @@ export default function Library() {
                 {asset.caption && (
                   <p className="text-[10px] text-muted-foreground line-clamp-2">{asset.caption}</p>
                 )}
-                <div className="flex gap-1">
+                <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
                   {asset.status === "generated" && (
                     <Button
                       size="sm"
@@ -180,6 +192,11 @@ export default function Library() {
                       onClick={() => updateStatus(asset.id, "published")}
                     >
                       Publicar
+                    </Button>
+                  )}
+                  {asset.caption && (
+                    <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => copyCaption(asset)}>
+                      {copiedId === asset.id ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
                     </Button>
                   )}
                   {asset.image_url && (
@@ -203,6 +220,13 @@ export default function Library() {
           ))}
         </div>
       )}
+
+      {/* Preview Modal */}
+      <AssetPreviewModal
+        open={!!previewAsset}
+        onOpenChange={(open) => !open && setPreviewAsset(null)}
+        asset={previewAsset}
+      />
     </div>
   );
 }

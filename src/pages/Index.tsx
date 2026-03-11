@@ -1,35 +1,43 @@
-import { Users, Mic, TrendingUp, BarChart3, PlayCircle, ListTodo } from "lucide-react";
+import { Users, Mic, TrendingUp, BarChart3, PlayCircle, ListTodo, Factory, Image, Zap } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { PageHeader } from "@/components/PageHeader";
 import { EmptyState } from "@/components/EmptyState";
 import { LoadingSkeleton } from "@/components/LoadingSkeleton";
 import type { Tables } from "@/integrations/supabase/types";
 
 const Dashboard = () => {
+  const navigate = useNavigate();
+
   const { data: episodes = [], isLoading: loadingEpisodes } = useQuery({
     queryKey: ["dashboard-episodes"],
     queryFn: async () => {
-      const { data } = await supabase.from("episodes").select("id, title, number, status, release_date").order("created_at", { ascending: false }).limit(5);
-      return (data || []) as Pick<Tables<"episodes">, "id" | "title" | "number" | "status" | "release_date">[];
+      const { data } = await supabase.from("episodes").select("id, title, number, status, release_date, theme, summary, hook, quote, cta").order("created_at", { ascending: false }).limit(5);
+      return (data || []) as Pick<Tables<"episodes">, "id" | "title" | "number" | "status" | "release_date" | "theme" | "summary" | "hook" | "quote" | "cta">[];
     },
   });
 
   const { data: counts, isLoading: loadingCounts } = useQuery({
     queryKey: ["dashboard-counts"],
     queryFn: async () => {
-      const [episodes, tasks, audience, mentions] = await Promise.all([
+      const [episodes, tasks, audience, mentions, assetsTotal, assetsPending] = await Promise.all([
         supabase.from("episodes").select("*", { count: "exact", head: true }),
         supabase.from("tasks").select("*", { count: "exact", head: true }).eq("status", "todo"),
         supabase.from("audience_members").select("*", { count: "exact", head: true }),
         supabase.from("mentions").select("*", { count: "exact", head: true }),
+        supabase.from("content_assets").select("*", { count: "exact", head: true }),
+        supabase.from("content_assets").select("*", { count: "exact", head: true }).in("status", ["generated", "pending"]),
       ]);
       return {
         episodes: episodes.count || 0,
         tasks: tasks.count || 0,
         audience: audience.count || 0,
         mentions: mentions.count || 0,
+        assets: assetsTotal.count || 0,
+        assetsPending: assetsPending.count || 0,
       };
     },
   });
@@ -42,9 +50,17 @@ const Dashboard = () => {
     },
   });
 
+  const { data: recentAssets = [] } = useQuery({
+    queryKey: ["dashboard-recent-assets"],
+    queryFn: async () => {
+      const { data } = await supabase.from("content_assets").select("id, piece_name, image_url, status, created_at").order("created_at", { ascending: false }).limit(6);
+      return (data || []) as { id: string; piece_name: string; image_url: string | null; status: string | null; created_at: string }[];
+    },
+  });
+
   const metrics = [
-    { name: "Audiencia Total", value: String(counts?.audience ?? 0), unit: "personas", icon: Users },
     { name: "Episodios", value: String(counts?.episodes ?? 0), unit: "total", icon: Mic },
+    { name: "Assets", value: String(counts?.assets ?? 0), unit: `${counts?.assetsPending ?? 0} pendientes`, icon: Image },
     { name: "Tareas", value: String(counts?.tasks ?? 0), unit: "pendientes", icon: TrendingUp },
     { name: "Menciones", value: String(counts?.mentions ?? 0), unit: "este mes", icon: BarChart3 },
   ];
@@ -56,6 +72,19 @@ const Dashboard = () => {
       case "editing": return { text: "En edición", cls: "text-chart-3 bg-chart-3/10" };
       default: return { text: "Borrador", cls: "text-muted-foreground bg-muted" };
     }
+  };
+
+  const goToFactory = (ep: typeof episodes[0]) => {
+    const params = new URLSearchParams();
+    if (ep.number) params.set("number", ep.number);
+    if (ep.title) params.set("title", ep.title);
+    if (ep.theme) params.set("theme", ep.theme);
+    if (ep.summary) params.set("script", ep.summary);
+    if (ep.hook) params.set("hook", ep.hook);
+    if (ep.quote) params.set("quote", ep.quote);
+    if (ep.cta) params.set("cta", ep.cta);
+    params.set("episode_id", ep.id);
+    navigate(`/factory?${params.toString()}`);
   };
 
   return (
@@ -86,6 +115,68 @@ const Dashboard = () => {
           })}
         </div>
       )}
+
+      {/* Quick produce + Recent assets */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Quick Produce */}
+        <div className="surface overflow-hidden">
+          <div className="p-5 border-b border-border flex justify-between items-center">
+            <h2 className="text-lg font-display font-semibold text-foreground">Producción rápida</h2>
+            <Link to="/factory" className="text-sm text-primary hover:text-primary/80 font-medium">Ir a Fábrica</Link>
+          </div>
+          {loadingEpisodes ? (
+            <div className="p-5"><LoadingSkeleton count={2} variant="row" /></div>
+          ) : episodes.length === 0 ? (
+            <EmptyState icon={Factory} message="Crea un episodio para producir contenido" className="py-12" />
+          ) : (
+            <div className="divide-y divide-border">
+              {episodes.slice(0, 3).map((ep) => (
+                <div key={ep.id} className="p-4 flex items-center justify-between surface-hover">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <Mic className="w-5 h-5 text-muted-foreground shrink-0" />
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-foreground truncate">{ep.title}</p>
+                      <p className="text-xs text-muted-foreground">{ep.number ? `#${ep.number}` : "Sin número"}</p>
+                    </div>
+                  </div>
+                  <Button size="sm" variant="outline" className="h-7 text-xs shrink-0" onClick={() => goToFactory(ep)}>
+                    <Zap className="h-3 w-3 mr-1" />
+                    Producir
+                  </Button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Recent Assets */}
+        <div className="surface overflow-hidden">
+          <div className="p-5 border-b border-border flex justify-between items-center">
+            <h2 className="text-lg font-display font-semibold text-foreground">Assets recientes</h2>
+            <Link to="/library" className="text-sm text-primary hover:text-primary/80 font-medium">Ver todos</Link>
+          </div>
+          {recentAssets.length === 0 ? (
+            <EmptyState icon={Image} message="No hay assets generados aún" className="py-12" />
+          ) : (
+            <div className="p-4 grid grid-cols-3 gap-2">
+              {recentAssets.map((a) => (
+                <div key={a.id} className="rounded-md overflow-hidden border border-border bg-secondary/30 aspect-square relative group">
+                  {a.image_url ? (
+                    <img src={a.image_url} alt={a.piece_name} className="w-full h-full object-cover" loading="lazy" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <Image className="h-5 w-5 text-muted-foreground/30" />
+                    </div>
+                  )}
+                  <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-background/80 to-transparent p-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <p className="text-[10px] text-foreground truncate">{a.piece_name}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
 
       {/* Recent Episodes */}
       <div className="surface overflow-hidden">
