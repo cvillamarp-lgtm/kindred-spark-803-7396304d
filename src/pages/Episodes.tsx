@@ -267,6 +267,27 @@ export default function Episodes() {
                       {ep.streams_total ? ep.streams_total.toLocaleString() : "—"}
                     </td>
                     <td className="px-4 py-3 text-muted-foreground">{ep.duration || "—"}</td>
+                    <td className="px-4 py-3">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-7 text-xs"
+                        onClick={() => {
+                          const params = new URLSearchParams();
+                          if (ep.number) params.set("number", ep.number);
+                          if (ep.title) params.set("title", ep.title);
+                          if (ep.theme) params.set("theme", ep.theme);
+                          if (ep.summary) params.set("script", ep.summary);
+                          if (ep.hook) params.set("hook", ep.hook);
+                          if (ep.quote) params.set("quote", ep.quote);
+                          if (ep.cta) params.set("cta", ep.cta);
+                          navigate(`/factory?${params.toString()}`);
+                        }}
+                      >
+                        <Factory className="h-3.5 w-3.5 mr-1" />
+                        Producir
+                      </Button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
