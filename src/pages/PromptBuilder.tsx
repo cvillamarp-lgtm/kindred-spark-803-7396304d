@@ -50,7 +50,29 @@ export default function PromptBuilder() {
   const [generatedImages, setGeneratedImages] = useState<GeneratedImage[]>([]);
   const [selectedImage, setSelectedImage] = useState<GeneratedImage | null>(null);
   const [linkEpisodeId, setLinkEpisodeId] = useState<string>("");
+  const [referenceImages, setReferenceImages] = useState<string[]>([]);
   const queryClient = useQueryClient();
+
+  const handleReferenceUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
+    Array.from(files).forEach((file) => {
+      if (!file.type.startsWith("image/")) { toast.error("Solo se permiten imágenes"); return; }
+      if (file.size > 5 * 1024 * 1024) { toast.error("Máximo 5MB por imagen"); return; }
+      const reader = new FileReader();
+      reader.onload = () => {
+        setReferenceImages((prev) => [...prev, reader.result as string]);
+        toast.success("Referencia agregada");
+      };
+      reader.readAsDataURL(file);
+    });
+    e.target.value = "";
+  };
+
+  const removeReference = (index: number) => {
+    setReferenceImages((prev) => prev.filter((_, i) => i !== index));
+    toast("Referencia eliminada");
+  };
 
   const { data: episodes = [] } = useQuery({
     queryKey: ["episodes"],
