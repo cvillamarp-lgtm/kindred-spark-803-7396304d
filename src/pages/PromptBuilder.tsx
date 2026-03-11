@@ -4,7 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Wand2, Copy, Check, RotateCcw, ImageIcon, Loader2, Download, Trash2, PenLine, Pencil, Link2 } from "lucide-react";
+import { Wand2, Copy, Check, RotateCcw, ImageIcon, Loader2, Download, Trash2, PenLine, Pencil, Link2, Upload, X, User } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -48,7 +50,29 @@ export default function PromptBuilder() {
   const [generatedImages, setGeneratedImages] = useState<GeneratedImage[]>([]);
   const [selectedImage, setSelectedImage] = useState<GeneratedImage | null>(null);
   const [linkEpisodeId, setLinkEpisodeId] = useState<string>("");
+  const [referenceImages, setReferenceImages] = useState<string[]>([]);
   const queryClient = useQueryClient();
+
+  const handleReferenceUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
+    Array.from(files).forEach((file) => {
+      if (!file.type.startsWith("image/")) { toast.error("Solo se permiten imágenes"); return; }
+      if (file.size > 5 * 1024 * 1024) { toast.error("Máximo 5MB por imagen"); return; }
+      const reader = new FileReader();
+      reader.onload = () => {
+        setReferenceImages((prev) => [...prev, reader.result as string]);
+        toast.success("Referencia agregada");
+      };
+      reader.readAsDataURL(file);
+    });
+    e.target.value = "";
+  };
+
+  const removeReference = (index: number) => {
+    setReferenceImages((prev) => prev.filter((_, i) => i !== index));
+    toast("Referencia eliminada");
+  };
 
   const { data: episodes = [] } = useQuery({
     queryKey: ["episodes"],
@@ -100,7 +124,7 @@ export default function PromptBuilder() {
     setGenerating(true);
     try {
       const { data, error } = await supabase.functions.invoke("generate-image", {
-        body: { prompt, episodeId: linkEpisodeId || undefined },
+        body: { prompt, episodeId: linkEpisodeId || undefined, referenceImages: referenceImages.length > 0 ? referenceImages : undefined },
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
@@ -127,7 +151,7 @@ export default function PromptBuilder() {
     setEditing(true);
     try {
       const { data, error } = await supabase.functions.invoke("generate-image", {
-        body: { prompt: editPrompt, mode: "edit", imageUrl: selectedImage.url, episodeId: linkEpisodeId || undefined },
+        body: { prompt: editPrompt, mode: "edit", imageUrl: selectedImage.url, episodeId: linkEpisodeId || undefined, referenceImages: referenceImages.length > 0 ? referenceImages : undefined },
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
@@ -220,7 +244,48 @@ export default function PromptBuilder() {
         </CardContent>
       </Card>
 
-      {/* Custom prompt */}
+      {/* Reference photos */}
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm flex items-center gap-2">
+            <User className="h-4 w-4 text-primary" />Fotos de referencia de personas
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <p className="text-xs text-muted-foreground">
+            Sube fotos de la persona que aparecerá en la imagen generada. El modelo usará estas referencias para mantener la apariencia.
+          </p>
+          <div className="flex flex-wrap gap-3 items-start">
+            {referenceImages.map((img, i) => (
+              <div key={i} className="relative group w-20 h-20 rounded-lg overflow-hidden border border-border">
+                <img src={img} alt={`Ref ${i + 1}`} className="w-full h-full object-cover" />
+                <button
+                  onClick={() => removeReference(i)}
+                  className="absolute top-0.5 right-0.5 bg-destructive text-destructive-foreground rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </div>
+            ))}
+            <Label
+              htmlFor="ref-upload"
+              className="w-20 h-20 rounded-lg border-2 border-dashed border-border hover:border-primary/50 flex flex-col items-center justify-center cursor-pointer transition-colors text-muted-foreground hover:text-foreground"
+            >
+              <Upload className="h-5 w-5 mb-1" />
+              <span className="text-[10px]">Subir</span>
+            </Label>
+            <Input
+              id="ref-upload"
+              type="file"
+              accept="image/*"
+              multiple
+              onChange={handleReferenceUpload}
+              className="hidden"
+            />
+          </div>
+        </CardContent>
+      </Card>
+
       <Card>
         <CardHeader className="pb-2">
           <CardTitle className="text-sm flex items-center gap-2">

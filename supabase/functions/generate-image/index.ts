@@ -18,7 +18,7 @@ serve(async (req) => {
 
   try {
     const body = await req.json();
-    const { prompt, mode, imageUrl: editImageUrl, episodeId } = body;
+    const { prompt, mode, imageUrl: editImageUrl, episodeId, referenceImages } = body;
     
     if (!prompt && mode !== "edit") throw new Error("Prompt is required");
 
@@ -27,21 +27,30 @@ serve(async (req) => {
 
     let messages: any[];
 
+    // Build content parts with reference images
+    const buildContentWithRefs = (textContent: string, extraImageUrl?: string): any => {
+      const hasRefs = referenceImages && referenceImages.length > 0;
+      if (!hasRefs && !extraImageUrl) return textContent;
+      
+      const parts: any[] = [{ type: "text", text: textContent }];
+      if (extraImageUrl) {
+        parts.push({ type: "image_url", image_url: { url: extraImageUrl } });
+      }
+      if (hasRefs) {
+        for (const refImg of referenceImages) {
+          parts.push({ type: "image_url", image_url: { url: refImg } });
+        }
+      }
+      return parts;
+    };
+
     if (mode === "edit" && editImageUrl) {
-      // Edit existing image
-      messages = [
-        {
-          role: "user",
-          content: [
-            { type: "text", text: `${AMTME_BRAND_PROMPT}\n\nEdit this image: ${prompt}` },
-            { type: "image_url", image_url: { url: editImageUrl } },
-          ],
-        },
-      ];
+      const editText = `${AMTME_BRAND_PROMPT}\n\n${referenceImages?.length ? "Use the reference photos to maintain the person's appearance. " : ""}Edit this image: ${prompt}`;
+      messages = [{ role: "user", content: buildContentWithRefs(editText, editImageUrl) }];
     } else {
-      // Generate new image with brand identity
-      const enhancedPrompt = `${AMTME_BRAND_PROMPT}\n\nCreate: ${prompt}. Professional podcast artwork, visually striking, modern design.`;
-      messages = [{ role: "user", content: enhancedPrompt }];
+      const refNote = referenceImages?.length ? "Use the reference photos provided to generate the person with that exact appearance. " : "";
+      const enhancedPrompt = `${AMTME_BRAND_PROMPT}\n\n${refNote}Create: ${prompt}. Professional podcast artwork, visually striking, modern design.`;
+      messages = [{ role: "user", content: buildContentWithRefs(enhancedPrompt) }];
     }
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
