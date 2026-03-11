@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -7,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { Mic, Plus, Search, Calendar, AlertTriangle, Download } from "lucide-react";
+import { Mic, Plus, Search, Calendar, AlertTriangle, Download, Factory } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -16,6 +17,7 @@ export default function Episodes() {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
 
   const { data: episodes = [], isLoading } = useQuery({
     queryKey: ["episodes"],
@@ -212,6 +214,7 @@ export default function Episodes() {
                   <th className="px-4 py-3 font-medium">Lanzamiento</th>
                   <th className="px-4 py-3 font-medium">Streams</th>
                   <th className="px-4 py-3 font-medium">Duración</th>
+                  <th className="px-4 py-3 font-medium"></th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
@@ -265,6 +268,27 @@ export default function Episodes() {
                       {ep.streams_total ? ep.streams_total.toLocaleString() : "—"}
                     </td>
                     <td className="px-4 py-3 text-muted-foreground">{ep.duration || "—"}</td>
+                    <td className="px-4 py-3">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-7 text-xs"
+                        onClick={() => {
+                          const params = new URLSearchParams();
+                          if (ep.number) params.set("number", ep.number);
+                          if (ep.title) params.set("title", ep.title);
+                          if (ep.theme) params.set("theme", ep.theme);
+                          if (ep.summary) params.set("script", ep.summary);
+                          if (ep.hook) params.set("hook", ep.hook);
+                          if (ep.quote) params.set("quote", ep.quote);
+                          if (ep.cta) params.set("cta", ep.cta);
+                          navigate(`/factory?${params.toString()}`);
+                        }}
+                      >
+                        <Factory className="h-3.5 w-3.5 mr-1" />
+                        Producir
+                      </Button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
