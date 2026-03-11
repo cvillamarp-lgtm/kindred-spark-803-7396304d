@@ -51,7 +51,7 @@ export function PieceCard({
             "Content-Type": "application/json",
             Authorization: `Bearer ${session.access_token}`,
           },
-          body: JSON.stringify({ prompt }),
+          body: JSON.stringify({ prompt, hostReference: piece.hostReference }),
         }
       );
 

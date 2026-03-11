@@ -469,7 +469,7 @@ export default function ContentFactory() {
                 "Content-Type": "application/json",
                 Authorization: `Bearer ${session.access_token}`,
               },
-              body: JSON.stringify({ prompt }),
+              body: JSON.stringify({ prompt, hostReference: piece.hostReference }),
             }
           );
 

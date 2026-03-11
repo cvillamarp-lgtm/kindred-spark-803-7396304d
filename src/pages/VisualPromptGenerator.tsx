@@ -195,42 +195,68 @@ const PIEZAS: Pieza[] = [
 // ─── INSTRUCCIÓN MAESTRA FIJA ─────────────────────────────────────────────────
 
 const INSTRUCCION_FIJA = `
-PALETA ÚNICA PERMITIDA
-INK #282828 · PAPER #F9F6EF · COBALT #193497 · HIGHLIGHTER GREEN #EAFF00
+PALETA ÚNICA PERMITIDA (SOLO ESTOS COLORES — cualquier color fuera = ERROR de producción)
+COBALT #1A1AE6 · COBALT DARK #1212A0 · CREAM #F5F0E8 · AMARILLO #F2C84B · NEGRO #0A0A0A · BLANCO #FFFFFF · GRIS SECUNDARIO #CCCCCC · GRIS FIRMA #888888
 
 REGLAS DE COLOR
-- Prohibido usar cualquier color fuera de esta paleta
-- Prohibido usar negro puro dominante; usar INK
-- Prohibido usar blanco puro dominante; usar PAPER
-- Prohibido abusar del verde; usarlo solo como acento
+- Máximo 3 colores activos por pieza (fondo + cream + amarillo)
+- El amarillo (#F2C84B) SOLO va en el elemento dominante tipográfico (nivel 1)
+- El cobalt azul (#1A1AE6) es color estructural y de fondo
+- El cream (#F5F0E8) es tipografía por defecto sobre cobalt o negro
+- El negro editorial (#0A0A0A) como fondo alternativo
+- No usar glow ni sombra de color activo
+- Amarillo: saturación −10%, sin glow
+- Cobalt fondo: luminosidad −5% para mayor peso visual
 
 ESTÉTICA OBLIGATORIA
-Editorial · contemporánea · limpia · psicológica · sobria · íntima · memorable · tensa sin exageración · emocionalmente madura
+Editorial · contemporánea · limpia · psicológica · sobria · íntima · memorable · emocionalmente madura
+La pieza debe entenderse en menos de 0.7 segundos en scroll móvil
 
-TIPOGRAFÍA
-Sans serif editorial contemporánea.
-Permitido: Black/ExtraBold para titulares · Medium/Regular para soporte · Outline puntual
-Prohibido: cursivas · serif · lettering decorativo · más de 2 estilos por pieza · más de 3 niveles jerárquicos
+SISTEMA TIPOGRÁFICO (6 NIVELES)
+Nivel 1 — Dominante: 100% (72-88px), Black/ExtraBold, #F2C84B, tracking −10 a 0, interlineado −8% a −10%
+Nivel 2 — Secundario: 72% (52-64px), Bold/SemiBold, #F5F0E8, tracking +10
+Nivel 3 — Terciario: 60% (44-52px), Medium/Regular, #F5F0E8, tracking +10 a +15
+Nivel 4 — Subtítulo: 52% (36-44px), Regular/Light, #CCCCCC, tracking +15
+Nivel 5 — CTA: 45% (32-38px), Medium/Condensado, #F5F0E8 opacidad 90%, tracking +20 a +30
+Nivel 6 — Firma/Logos: 38% (24-28px), Light, #888888 opacidad 85%, tracking +30 a +40
 
-HOST
-Hombre latino, 35–42 años, físico natural, expresión sobria, contención emocional, calma, honestidad visual.
-No caricaturizar · no embellecer artificialmente · no stock genérico · no sexualizar · no dramatizar en exceso.
+REGLAS TIPOGRÁFICAS
+Sans serif editorial contemporánea. No usar cursivas. No duplicar dominantes. Máx. 2 pesos por bloque. Mayúsculas siempre.
+
+HOST (OBLIGATORIO — usar foto de referencia)
+Hombre latino, 35–42 años, barba corta, tatuaje brazo izquierdo visible, cap verde.
+Lente 85mm, f/4, ISO 100. Iluminación frontal suave. Expresión natural, íntima, no posada.
+Piel realista, sin retoque excesivo. Acabado cinematográfico editorial.
+IMAGEN 01: Sentado al revés en silla de madera, camiseta blanca AMTME, fondo negro #0A0A0A.
+IMAGEN 02: Sentado en suelo, camiseta azul AMTME, fondo cobalt #1A1AE6 o negro #0A0A0A.
+
+COMPOSICIÓN
+Retícula 12 columnas, márgenes 90px, gutter 24px. Un solo dominante claro. Máximo 4 grupos visuales.
+Tipografía NO puede tapar la cara del host. Mínimo 40px entre grupos. Espacio negativo activo.
+Orden lectura: Dominante → Contexto → Complemento → Subtítulo → CTA → Firma/logos.
+
+SAFE ZONES
+1080×1080: X 90–990 / Y 90–990
+1080×1350: X 90–990 / Y 120–1230
+1080×1920: X 90–990 / Y 250–1670
+
+ELEMENTOS FIJOS
+- A MÍ TAMPOCO ME EXPLICARON (siempre mayúsculas)
+- Ep. XX — (formato número episodio)
+- CHRISTIAN VILLAMAR (firma, #888888, opacidad 85%, tracking +30)
+- Logos Spotify + Apple Podcasts (blanco #FFFFFF, escala 90%, alineados, separación 24px)
+- PODCAST (tag, tracking +40, mayúsculas)
 
 EFECTOS PERMITIDOS
-Grano editorial muy sutil · bloques de color sólidos · filetes finos · subrayados · cajas limpias · recortes precisos
+Grano editorial muy sutil · bloques sólidos · filetes finos · subrayados · cajas limpias · recortes precisos
 
 EFECTOS PROHIBIDOS
-Glow fuerte · sombras dramáticas · 3D · biseles · stickers · fondos complejos · gradientes llamativos · estética motivacional barata
+Glow · sombras dramáticas · 3D · biseles · stickers · gradientes · motivacional barato · gran angular · saturación excesiva · filtros artificiales · retoque plástico · estética genérica · cursivas
 
 DEFINICIÓN DE LISTO
-- Respeta exactamente el formato indicado
-- Respeta safe zones reales
-- Coherente con AMTME
-- Solo paleta indicada
-- Host natural y editorial
-- Comunica en menos de 2 segundos
-- Funciona en miniatura
-- Lista para publicar
+- Safe zones respetadas · Solo paleta AMTME · Un solo dominante en #F2C84B
+- Escala tipográfica correcta · Host en eje áureo · Se entiende en <0.7s
+- Nombre, Ep. XX, firma y logos presentes · Sin cursivas · Lista para publicar
 `.trim();
 
 // ─── GENERADOR DE PROMPT ──────────────────────────────────────────────────────
