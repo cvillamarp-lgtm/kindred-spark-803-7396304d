@@ -151,7 +151,7 @@ export default function PromptBuilder() {
     setEditing(true);
     try {
       const { data, error } = await supabase.functions.invoke("generate-image", {
-        body: { prompt: editPrompt, mode: "edit", imageUrl: selectedImage.url, episodeId: linkEpisodeId || undefined },
+        body: { prompt: editPrompt, mode: "edit", imageUrl: selectedImage.url, episodeId: linkEpisodeId || undefined, referenceImages: referenceImages.length > 0 ? referenceImages : undefined },
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
