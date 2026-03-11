@@ -1,175 +1,114 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
 serve(async (req) => {
-  if (req.method === "OPTIONS")
-    return new Response(null, { headers: corsHeaders });
+  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader?.startsWith("Bearer ")) {
-      return new Response(JSON.stringify({ error: "No autorizado" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+    const { script } = await req.json();
+
+    if (!script || script.trim().length < 50) {
+      return new Response(JSON.stringify({ error: "El guión es demasiado corto para analizar" }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
-    }
-
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_ANON_KEY")!,
-      { global: { headers: { Authorization: authHeader } } }
-    );
-
-    const token = authHeader.replace("Bearer ", "");
-    const { data: claimsData, error: claimsError } =
-      await supabase.auth.getClaims(token);
-    if (claimsError || !claimsData?.claims) {
-      return new Response(JSON.stringify({ error: "No autorizado" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    const { script, title, theme } = await req.json();
-
-    if (!script && !title && !theme) {
-      return new Response(
-        JSON.stringify({ error: "Se requiere un guión, título o tema" }),
-        {
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
-      );
     }
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
-    const systemPrompt = `Eres un director creativo editorial. Extraes contenido de guiones de podcast para producir 15 piezas visuales para redes sociales.
+    const systemPrompt = `Eres un estratega de contenido del podcast "A Mi Tampoco Me Explicaron" (AMTME).
+Tu tarea: analizar un guión de podcast y extraer los datos necesarios para producir 15 piezas visuales.
+Devuelve ÚNICAMENTE un objeto JSON válido. Sin explicaciones, sin markdown, sin bloques de código.
 
-Tu tarea: dado un guión, título o tema de un episodio de podcast, debes extraer y generar:
-1. thesis: La tesis central del episodio (1-2 oraciones)
-2. keyPhrases: 6 frases clave cortas y contundentes
-3. pieceCopy: Un objeto con el copy específico para cada una de las 15 piezas visuales
+REGLAS DEL COPY GENERADO:
+- MAYÚSCULAS para titulares principales
+- Máximo 4-5 palabras por línea
+- Frases cortas, directas, con peso emocional
+- Estilo: sobrio, editorial, psicológico, sin exclamaciones ni emojis
+- Los campos de continuación (linea2, linea3, etc.) pueden ser vacíos si no son necesarios
 
-Las 15 piezas son:
-1. Portada 1:1 — necesita: frase principal (2 líneas)
-2. Lanzamiento 4:5 — necesita: titular en 3 partes
-3. Reel cover 9:16 — necesita: titular corto (2 líneas)
-4. Story lanzamiento 9:16 — necesita: titular (3 líneas)
-5. Story quote 9:16 — necesita: frase larga en 2 partes
-6. Quote feed 4:5 — necesita: frase corta (3 líneas)
-7. Carrusel 1 (portada) — necesita: titular (2 líneas)
-8. Carrusel 2 — necesita: idea única (2 líneas)
-9. Carrusel 3 — necesita: frase tensión partes A y B
-10. Carrusel 4 — necesita: frase de impacto + concepto memorable
-11. Carrusel 5 — necesita: frase clave (3 líneas)
-12. Carrusel 6 — necesita: frase clave + continuación
-13. Carrusel 7 — necesita: clímax emocional (3 líneas)
-14. Carrusel 8 CTA — copy fijo: GUÁRDALO / COMPÁRTELO / ESCUCHA EL EPISODIO
-15. Highlight cover — solo número de episodio
-
-IMPORTANTE:
-- Las frases deben ser CONTUNDENTES, CORTAS y EDITORIALES
-- Estilo psicológico, íntimo, sobrio — NO motivacional genérico
-- Extraer las ideas más poderosas del contenido
-- Cada pieza tiene un propósito diferente en el funnel
-
-Responde SOLO en JSON válido con esta estructura exacta:
+El JSON debe tener EXACTAMENTE esta estructura:
 {
-  "thesis": "...",
-  "keyPhrases": ["frase1", "frase2", ...],
-  "pieceCopy": {
-    "1": ["línea1", "línea2"],
-    "2": ["parte1", "parte2", "parte3"],
-    "3": ["titular", "línea2"],
-    "4": ["titular", "línea2", "línea3"],
-    "5": ["parte1", "parte2 continuación"],
-    "6": ["línea1", "línea2", "línea3"],
-    "7": ["titular", "continuación"],
-    "8": ["idea", "línea2"],
-    "9": ["parte A", "parte B"],
-    "10": ["impacto", "concepto"],
-    "11": ["frase", "línea2", "línea3"],
-    "12": ["frase", "continuación"],
-    "13": ["clímax", "línea2", "línea3"],
-    "14": ["GUÁRDALO", "COMPÁRTELO"],
-    "15": ["XX"]
+  "seccionA": {
+    "numeroEpisodio": "número de 2 dígitos extraído del guión, o '00' si no se menciona",
+    "tesisCentral": "la idea núcleo del episodio en 1-2 oraciones directas",
+    "frasesClaves": ["frase corta 1", "frase corta 2", "frase corta 3", "frase corta 4", "frase corta 5"]
+  },
+  "seccionB": {
+    "portada": { "linea1": "TITULAR PRINCIPAL", "linea2": "CONTINUACIÓN O VACÍO" },
+    "lanzamiento": { "titular1": "LÍNEA 1", "titular2": "LÍNEA 2", "titular3": "LÍNEA 3 O VACÍO" },
+    "reel": { "titular": "TITULAR IMPACTANTE CORTO", "linea2": "COMPLEMENTO O VACÍO" },
+    "story_lanzamiento": { "titular": "TITULAR", "linea2": "LÍNEA 2", "linea3": "LÍNEA 3 O VACÍO" },
+    "story_quote": { "parte1": "FRASE EMOCIONAL PARTE 1", "parte2": "FRASE EMOCIONAL PARTE 2" },
+    "quote_feed": { "frase": "FRASE GUARDABLE", "linea2": "CONTINUACIÓN", "linea3": "CIERRE O VACÍO" },
+    "slide1": { "titular": "PREGUNTA O TITULAR QUE INVITE A DESLIZAR", "linea2": "COMPLEMENTO O VACÍO" },
+    "slide2": { "idea": "CONCEPTO ÚNICO", "linea2": "DESARROLLO BREVE" },
+    "slide3": { "parteA": "TENSIÓN PARTE A", "parteB": "CONTRASTE PARTE B" },
+    "slide4": { "impacto": "FRASE DE IMPACTO", "concepto": "NOMBRE DEL CONCEPTO CLAVE" },
+    "slide5": { "frase": "FRASE CLAVE", "linea2": "CONTINUACIÓN", "linea3": "CIERRE" },
+    "slide6": { "frase": "FRASE CONTUNDENTE", "linea2": "COMPLEMENTO" },
+    "slide7": { "climax": "FRASE MÁS PODEROSA DEL EPISODIO", "linea2": "CONTINUACIÓN", "linea3": "RESOLUCIÓN" },
+    "slide8": {},
+    "highlight": { "numero": "mismo número que seccionA.numeroEpisodio" }
   }
 }`;
 
-    const content = [
-      title ? `Título: ${title}` : "",
-      theme ? `Tema: ${theme}` : "",
-      script ? `Guión:\n${script}` : "",
-    ]
-      .filter(Boolean)
-      .join("\n\n");
+    const userPrompt = `Analiza este guión de podcast y extrae el copy para todas las piezas visuales:\n\n${script.substring(0, 8000)}`;
 
-    const response = await fetch(
-      "https://ai.gateway.lovable.dev/v1/chat/completions",
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${LOVABLE_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: "google/gemini-3-flash-preview",
-          messages: [
-            { role: "system", content: systemPrompt },
-            {
-              role: "user",
-              content: `Extrae el contenido para las 15 piezas visuales de este episodio:\n\n${content.substring(0, 8000)}`,
-            },
-          ],
-          temperature: 0.7,
-          response_format: { type: "json_object" },
-        }),
-      }
-    );
+    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "google/gemini-3-flash-preview",
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userPrompt },
+        ],
+        stream: false,
+      }),
+    });
 
     if (!response.ok) {
       if (response.status === 429) {
-        return new Response(
-          JSON.stringify({ error: "Límite de uso alcanzado" }),
-          {
-            status: 429,
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-          }
-        );
+        return new Response(JSON.stringify({ error: "Límite de uso alcanzado, intenta de nuevo más tarde." }), {
+          status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      if (response.status === 402) {
+        return new Response(JSON.stringify({ error: "Créditos agotados." }), {
+          status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
       }
       const t = await response.text();
       console.error("AI gateway error:", response.status, t);
-      return new Response(
-        JSON.stringify({ error: "Error del servicio de IA" }),
-        {
-          status: 500,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
-      );
+      return new Response(JSON.stringify({ error: "Error del servicio de IA" }), {
+        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
-    const aiResult = await response.json();
-    const rawContent =
-      aiResult.choices?.[0]?.message?.content || "{}";
+    const data = await response.json();
+    const rawContent: string = data.choices?.[0]?.message?.content ?? "";
 
-    // Parse JSON, handling possible markdown wrapping
+    const cleaned = rawContent
+      .replace(/^```json?\s*/i, "")
+      .replace(/\s*```$/i, "")
+      .trim();
+
     let parsed;
     try {
-      const cleaned = rawContent
-        .replace(/```json\n?/g, "")
-        .replace(/```\n?/g, "")
-        .trim();
       parsed = JSON.parse(cleaned);
     } catch {
-      parsed = { error: "No se pudo parsear la respuesta de IA", raw: rawContent };
+      console.error("JSON parse error. Raw content:", rawContent);
+      return new Response(JSON.stringify({ error: "La IA no devolvió un JSON válido. Intenta de nuevo." }), {
+        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     return new Response(JSON.stringify(parsed), {
@@ -177,14 +116,8 @@ Responde SOLO en JSON válido con esta estructura exacta:
     });
   } catch (e) {
     console.error("extract-content error:", e);
-    return new Response(
-      JSON.stringify({
-        error: e instanceof Error ? e.message : "Unknown error",
-      }),
-      {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      }
-    );
+    return new Response(JSON.stringify({ error: e instanceof Error ? e.message : "Unknown error" }), {
+      status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
   }
 });
