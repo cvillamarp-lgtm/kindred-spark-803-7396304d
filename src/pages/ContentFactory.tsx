@@ -29,6 +29,42 @@ interface ExtractionResult {
   pieceCopy: PieceCopyMap;
 }
 
+// Convert seccionA/seccionB format from extract-content to our internal format
+function parseExtraction(data: any): ExtractionResult | null {
+  // Handle seccionA/seccionB format from edge function
+  if (data.seccionA && data.seccionB) {
+    const thesis = data.seccionA.tesisCentral || "";
+    const keyPhrases = data.seccionA.frasesClaves || [];
+    const pieceCopy: PieceCopyMap = {};
+
+    // Map seccionB pieces to VISUAL_PIECES by index
+    const secBKeys = [
+      "portada", "lanzamiento", "reel", "story_lanzamiento", "story_quote",
+      "quote_feed", "slide1", "slide2", "slide3", "slide4",
+      "slide5", "slide6", "slide7", "slide8", "highlight",
+    ];
+
+    secBKeys.forEach((key, idx) => {
+      const pieceData = data.seccionB[key];
+      if (pieceData && typeof pieceData === "object") {
+        const lines = Object.values(pieceData).filter((v): v is string => typeof v === "string" && v.length > 0);
+        if (lines.length > 0) {
+          pieceCopy[String(idx + 1)] = lines;
+        }
+      }
+    });
+
+    return { thesis, keyPhrases, pieceCopy };
+  }
+
+  // Handle direct thesis/pieceCopy format (legacy)
+  if (data.thesis && data.pieceCopy) {
+    return data as ExtractionResult;
+  }
+
+  return null;
+}
+
 interface AssetState {
   imageUrl?: string;
   caption: string;
