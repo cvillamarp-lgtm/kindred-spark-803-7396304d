@@ -214,6 +214,7 @@ export default function Episodes() {
                   <th className="px-4 py-3 font-medium">Lanzamiento</th>
                   <th className="px-4 py-3 font-medium">Streams</th>
                   <th className="px-4 py-3 font-medium">Duración</th>
+                  <th className="px-4 py-3 font-medium"></th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
