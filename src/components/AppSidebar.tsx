@@ -1,4 +1,4 @@
-import { Home, Users, Calendar, Mic, UserPlus, Image, BookOpen, BarChart3, FileText, Settings, ListTodo, Wand2, Sparkles, FileStack, AtSign, LogOut, Layers } from "lucide-react";
+import { Home, Users, Calendar, Mic, UserPlus, Image, BookOpen, BarChart3, FileText, Settings, ListTodo, Wand2, Sparkles, FileStack, AtSign, LogOut, Layers, Factory } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
@@ -24,6 +24,7 @@ const mainNav = [
 ];
 
 const toolsNav = [
+  { label: "Fábrica", url: "/factory", icon: Factory },
   { label: "Guiones IA", url: "/scripts", icon: Sparkles },
   { label: "Prompts", url: "/prompts", icon: Wand2 },
   { label: "Visuales", url: "/visual-prompts", icon: Layers },
