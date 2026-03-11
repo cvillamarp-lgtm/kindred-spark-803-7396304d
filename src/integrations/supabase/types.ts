@@ -101,6 +101,59 @@ export type Database = {
         }
         Relationships: []
       }
+      content_assets: {
+        Row: {
+          caption: string | null
+          created_at: string | null
+          episode_id: string | null
+          hashtags: string | null
+          id: string
+          image_url: string | null
+          piece_id: number
+          piece_name: string
+          prompt_used: string | null
+          status: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          caption?: string | null
+          created_at?: string | null
+          episode_id?: string | null
+          hashtags?: string | null
+          id?: string
+          image_url?: string | null
+          piece_id: number
+          piece_name: string
+          prompt_used?: string | null
+          status?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          caption?: string | null
+          created_at?: string | null
+          episode_id?: string | null
+          hashtags?: string | null
+          id?: string
+          image_url?: string | null
+          piece_id?: number
+          piece_name?: string
+          prompt_used?: string | null
+          status?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "content_assets_episode_id_fkey"
+            columns: ["episode_id"]
+            isOneToOne: false
+            referencedRelation: "episodes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       episode_templates: {
         Row: {
           body: string | null
