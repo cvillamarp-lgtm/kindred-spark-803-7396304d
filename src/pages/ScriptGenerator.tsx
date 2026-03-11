@@ -7,8 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Sparkles, Copy, Check, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-
-const STREAM_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-script`;
+import { supabase } from "@/integrations/supabase/client";
 
 export default function ScriptGenerator() {
   const [theme, setTheme] = useState("");
