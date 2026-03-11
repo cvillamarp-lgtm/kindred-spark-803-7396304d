@@ -334,7 +334,7 @@ export default function ContentFactory() {
     toast.success("Asset eliminado");
   }, []);
 
-  // Save all to database
+  // Save all to database using upsert
   const saveToDatabase = async () => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -356,6 +356,7 @@ export default function ContentFactory() {
             hashtags: a.hashtags || null,
             prompt_used: a.promptUsed || null,
             status: a.status,
+            episode_id: episodeId || null,
           };
         });
 
@@ -364,7 +365,9 @@ export default function ContentFactory() {
         return;
       }
 
-      const { error } = await supabase.from("content_assets").insert(rows as any);
+      const { error } = await supabase
+        .from("content_assets")
+        .upsert(rows as any, { onConflict: "user_id,piece_id,episode_id" });
       if (error) throw error;
 
       toast.success(`${rows.length} assets guardados`);
