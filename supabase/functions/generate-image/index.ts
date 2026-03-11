@@ -6,73 +6,95 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const HOST_REFERENCE_URL = "https://knjhhmqthkpucfxpdhxj.supabase.co/storage/v1/object/public/generated-images/host-reference.png";
+// Two mandatory host references — one per image type
+const HOST_REFERENCES = {
+  imagen01: "https://knjhhmqthkpucfxpdhxj.supabase.co/storage/v1/object/public/generated-images/host-imagen01.png",
+  imagen02: "https://knjhhmqthkpucfxpdhxj.supabase.co/storage/v1/object/public/generated-images/host-imagen02.png",
+};
 
 const AMTME_BRAND_PROMPT = `INSTRUCCIÓN MAESTRA DE IMAGEN — AMTME (A MÍ TAMPOCO ME EXPLICARON)
 
-PALETA OFICIAL (ÚNICA PERMITIDA):
-- Cobalt Blue (principal): #1A1AE6
-- Cobalt oscuro (hover/sombra): #1212A0
-- Cream / Marfil (tipografía): #F5F0E8
-- Amarillo editorial (acento/dominante): #F2C84B
-- Negro editorial (base oscura): #0A0A0A
-- Blanco limpio (fondos claros): #FFFFFF
-- Grises permitidos: #2A2A2A / #555555 / #999999
+PALETA OFICIAL (ÚNICA PERMITIDA — cualquier color fuera = ERROR de producción):
+- Cobalt Blue (principal/fondo): #1A1AE6 · RGB 26, 26, 230
+- Cobalt oscuro (hover/sombra): #1212A0 · RGB 18, 18, 160
+- Cream / Marfil (tipografía principal): #F5F0E8 · RGB 245, 240, 232
+- Amarillo editorial (SOLO dominante tipográfico): #F2C84B · RGB 242, 200, 75
+- Negro editorial (fondo alternativo): #0A0A0A · RGB 10, 10, 10
+- Blanco (logos plataformas): #FFFFFF
+- Gris secundario (tipografía nivel 4): #CCCCCC
+- Gris firma/metadatos: #888888 · opacidad 85%
 
 REGLAS CROMÁTICAS OBLIGATORIAS:
-— Solo se usan colores de la paleta oficial. Cualquier color no autorizado es ERROR de producción.
-— Máximo 3 colores activos por pieza.
-— El amarillo (#F2C84B) solo va en el elemento dominante tipográfico.
-— El cobalt azul (#1A1AE6) es el color estructural y de fondo.
-— El cream (#F5F0E8) es el color por defecto de la tipografía sobre cobalt.
+— Máximo 3 colores activos por pieza (fondo + cream + amarillo).
+— El amarillo #F2C84B SOLO va en el elemento dominante tipográfico (nivel 1).
+— El cobalt azul #1A1AE6 es color estructural y de fondo.
+— El cream #F5F0E8 es tipografía por defecto sobre cobalt o negro.
 — No usar glow ni sombra de color activo.
+— Amarillo: saturación −10%, sin glow.
+— Cobalt fondo: luminosidad −5% para mayor peso visual.
+— Fondo negro: exposición −5% para evitar aplastamiento.
 
-TIPOGRAFÍA:
-— Sans serif editorial contemporánea (Inter, Neue Haas, Aktiv Grotesk, Helvetica Neue).
-— Jerarquía: 100% / 72% / 60% / 52% / 45% / 38%.
-— Tracking dominante: −10 a 0. Tracking CTA: +20 a +30.
-— No usar cursivas. No duplicar dominantes. Máx. 2 pesos por bloque.
+SISTEMA TIPOGRÁFICO (6 NIVELES OBLIGATORIOS):
+Nivel 1 — Dominante: 100% (72-88px), Black/ExtraBold, #F2C84B, tracking −10 a 0, interlineado −8% a −10%
+Nivel 2 — Secundario: 72% (52-64px), Bold/SemiBold, #F5F0E8, tracking +10
+Nivel 3 — Terciario: 60% (44-52px), Medium/Regular, #F5F0E8, tracking +10 a +15
+Nivel 4 — Subtítulo: 52% (36-44px), Regular/Light, #CCCCCC, tracking +15
+Nivel 5 — CTA: 45% (32-38px), Medium/Condensado, #F5F0E8 opacidad 90%, tracking +20 a +30
+Nivel 6 — Firma/Metadatos/Logos: 38% (24-28px), Light, #888888 opacidad 85%, tracking +30 a +40
+
+REGLAS TIPOGRÁFICAS:
+— Sans serif editorial contemporánea (Inter, Neue Haas, Helvetica Neue).
+— No usar cursivas NUNCA. No duplicar dominantes. Máx. 2 pesos por bloque.
+— Mayúsculas siempre. Máx. 12-16 palabras por línea.
 
 COMPOSICIÓN:
 — Retícula 12 columnas, márgenes 90px, gutter 24px.
 — Un solo dominante claro por pieza.
-— Balance texto-imagen: la tipografía NO puede tapar la cara del host.
+— Tipografía NO puede tapar la cara del host.
 — Máximo 4 grupos visuales, sin elementos flotantes.
-— Espacio negativo activo.
-— Orden de lectura: Dominante → Contexto → Complemento → Subtítulo → CTA → Firma/logos.
+— Espacio negativo activo. Mínimo 40px entre grupos.
+— Orden lectura: Dominante → Contexto → Complemento → Subtítulo → CTA → Firma/logos.
 
-FOTOGRAFÍA DEL HOST (OBLIGATORIO):
-— La foto de referencia adjunta es el host real del podcast. PRESERVAR sus rasgos faciales exactos, complexión y apariencia.
-— Lente 85mm, f/4, ISO 100. Iluminación frontal suave + relleno lateral.
-— Expresión natural, no posada, íntima. Piel realista, sin retoque excesivo.
-— La cara del host es el eje visual. Ojos en tercio superior o línea media.
-— Acabado cinematográfico, nivel revista editorial.
+FOTOGRAFÍA DEL HOST (OBLIGATORIO — PRESERVAR RASGOS EXACTOS):
+— Las fotos de referencia adjuntas son el host REAL. PRESERVAR rasgos faciales, complexión, barba, tatuaje brazo izquierdo.
+— Lente 85mm, f/4, ISO 100, 1/125s. Iluminación frontal suave + relleno lateral. Temp 5500-6000K.
+— Expresión natural, íntima, no posada. Piel realista sin retoque excesivo.
+— Contraste moderado. Saturación −5% a −10%. Color grading cinematográfico.
+— Acabado nivel revista editorial. Nitidez alta en ojos y rostro.
 
 ELEMENTOS FIJOS EN TODA PIEZA:
 — A MÍ TAMPOCO ME EXPLICARON (siempre mayúsculas)
-— Ep. XX — (formato de número de episodio)
-— CHRISTIAN VILLAMAR (firma, opacidad 85%, escala mínima)
-— Logos Spotify + Apple Podcasts (escala 90%, alineados)
+— Ep. XX — (formato número episodio)
+— CHRISTIAN VILLAMAR (firma, #888888, opacidad 85%, tracking +30)
+— Logos Spotify + Apple Podcasts (blanco #FFFFFF, escala 90%, alineados, separación 24px)
 — PODCAST (tag, tracking +40, mayúsculas, pequeño)
 
-SAFE ZONES (1080×1350): X 90–990 / Y 120–1230
-SAFE ZONES (1080×1080): X 90–990 / Y 90–990
+SAFE ZONES:
+1080×1080: X 90–990 / Y 90–990 (zona activa 900×900px)
+1080×1350: X 90–990 / Y 120–1230 (zona activa 900×1110px)
+1080×1920: X 90–990 / Y 250–1670
 Ningún texto ni elemento visual puede salir de estas coordenadas.
 
 PROHIBIDO:
+— Cualquier color fuera de la paleta oficial
 — Distorsión gran angular, sombras duras, saturación excesiva, filtros artificiales
 — Glow, 3D, biseles, gradientes, stickers
-— Retoque plástico, estética de red social genérica
+— Retoque plástico, estética de red social genérica, filtros IG, presets genéricos
 — Cursivas, micro-firmas tipo Barra de Navidad
-— Colores fuera de la paleta oficial
+— Lentes menores a 50mm
 
-ESTÁNDAR: La pieza debe entenderse en menos de 0.7 segundos en scroll móvil. Si hay duda sobre un elemento, ajustar. El estándar AMTME es editorial premium.`;
+PSICOLOGÍA DE CONVERSIÓN:
+— Se entiende en <0.7s en scroll. Dominante activa en 0.5s. Identificación emocional en 1s. Intriga en 1.5s. CTA en 2s.
+— El dominante refleja dolor del oyente, no describe contenido.
+— CTA conversacional, no publicitario.
+— La pieza genera urgencia emocional sin agresividad.
+
+ESTÁNDAR: Editorial premium. Si hay duda sobre un elemento, ajustar. No "suficientemente bueno".`;
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    // Auth validation
     const authHeader = req.headers.get("Authorization");
     if (!authHeader?.startsWith("Bearer ")) {
       return new Response(JSON.stringify({ error: "No autorizado" }), {
@@ -95,19 +117,23 @@ serve(async (req) => {
     }
 
     const body = await req.json();
-    const { prompt, mode, imageUrl: editImageUrl, episodeId, referenceImages } = body;
+    const { prompt, mode, imageUrl: editImageUrl, episodeId, referenceImages, hostReference } = body;
     
     if (!prompt && mode !== "edit") throw new Error("Prompt is required");
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
-    // Always include host reference as first image
-    const allReferenceImages = [HOST_REFERENCE_URL, ...(referenceImages || [])];
+    // Select host reference based on piece type (default to both)
+    const hostRef = hostReference as keyof typeof HOST_REFERENCES;
+    const hostUrls = hostRef && HOST_REFERENCES[hostRef]
+      ? [HOST_REFERENCES[hostRef]]
+      : [HOST_REFERENCES.imagen01, HOST_REFERENCES.imagen02];
+
+    const allReferenceImages = [...hostUrls, ...(referenceImages || [])];
 
     const buildContent = (textContent: string, extraImageUrl?: string): any => {
       const parts: any[] = [{ type: "text", text: textContent }];
-      // Always add host reference first
       for (const refImg of allReferenceImages) {
         parts.push({ type: "image_url", image_url: { url: refImg } });
       }
@@ -117,13 +143,19 @@ serve(async (req) => {
       return parts;
     };
 
+    const hostContextNote = hostRef === "imagen01"
+      ? "La foto de referencia muestra al host sentado al revés en silla de madera, camiseta blanca AMTME, cap verde, brazos cruzados. USAR ESTA PERSONA EXACTA."
+      : hostRef === "imagen02"
+      ? "La foto de referencia muestra al host sentado en el suelo, relajado, camiseta azul AMTME, cap verde. USAR ESTA PERSONA EXACTA."
+      : "Las fotos de referencia muestran al host en dos poses distintas. USAR ESTA PERSONA EXACTA preservando rasgos faciales, barba y tatuaje.";
+
     let messages: any[];
 
     if (mode === "edit" && editImageUrl) {
-      const editText = `${AMTME_BRAND_PROMPT}\n\nLa PRIMERA foto de referencia es SIEMPRE el host del podcast — debe aparecer con su apariencia exacta, rasgos faciales y complexión. ${allReferenceImages.length > 2 ? "Las fotos adicionales muestran otras personas que también deben aparecer. " : ""}Edita esta imagen: ${prompt}`;
+      const editText = `${AMTME_BRAND_PROMPT}\n\n${hostContextNote} ${allReferenceImages.length > 2 ? "Las fotos adicionales muestran otras personas que también deben aparecer. " : ""}Edita esta imagen: ${prompt}`;
       messages = [{ role: "user", content: buildContent(editText, editImageUrl) }];
     } else {
-      const enhancedPrompt = `${AMTME_BRAND_PROMPT}\n\nLa PRIMERA foto de referencia es SIEMPRE el host del podcast — genera la imagen con esta persona exacta, preservando sus rasgos faciales, barba y complexión. ${allReferenceImages.length > 2 ? "Las fotos adicionales muestran otras personas que también deben aparecer. " : ""}Crear: ${prompt}. Artwork editorial premium de podcast, visualmente impactante, diseño moderno.`;
+      const enhancedPrompt = `${AMTME_BRAND_PROMPT}\n\n${hostContextNote} ${allReferenceImages.length > 2 ? "Las fotos adicionales muestran otras personas que también deben aparecer. " : ""}Crear: ${prompt}`;
       messages = [{ role: "user", content: buildContent(enhancedPrompt) }];
     }
 
@@ -173,7 +205,6 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Ensure bucket exists
     const { error: bucketError } = await supabase.storage.createBucket("generated-images", {
       public: true,
       fileSizeLimit: 10485760,
@@ -182,7 +213,6 @@ serve(async (req) => {
       console.error("Bucket error:", bucketError);
     }
 
-    // Decode base64 and upload
     const base64Data = imageDataUrl.replace(/^data:image\/\w+;base64,/, "");
     const binaryData = Uint8Array.from(atob(base64Data), (c) => c.charCodeAt(0));
     const fileName = `img_${Date.now()}.png`;
@@ -201,7 +231,6 @@ serve(async (req) => {
     const { data: publicUrlData } = supabase.storage.from("generated-images").getPublicUrl(fileName);
     const finalUrl = publicUrlData.publicUrl;
 
-    // If episodeId provided, update episode cover
     if (episodeId) {
       const { error: updateError } = await supabase
         .from("episodes")
