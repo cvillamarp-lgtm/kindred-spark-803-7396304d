@@ -162,11 +162,12 @@ export default function ContentFactory() {
         throw new Error(err.error || `Error ${resp.status}`);
       }
 
-      const data: ExtractionResult = await resp.json();
-      if (data.thesis && data.pieceCopy) {
-        setExtraction(data);
+      const rawData = await resp.json();
+      const parsed = parseExtraction(rawData);
+      if (parsed) {
+        setExtraction(parsed);
         const merged: PieceCopyMap = {};
-        for (const [k, v] of Object.entries(data.pieceCopy)) {
+        for (const [k, v] of Object.entries(parsed.pieceCopy)) {
           merged[k] = v.map((line: string) =>
             line.replace(/XX/g, epNumber.padStart(2, "0") || "XX")
           );
