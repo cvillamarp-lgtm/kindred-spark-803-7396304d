@@ -32,6 +32,7 @@ const Tasks = lazy(() => import("./pages/Tasks"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const VisualPromptGenerator = lazy(() => import("./pages/VisualPromptGenerator"));
 const ContentPipeline = lazy(() => import("./pages/ContentPipeline"));
+const Library = lazy(() => import("./pages/Library"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -84,6 +85,7 @@ const App = () => (
                         <Route path="/tasks" element={<Tasks />} />
                         <Route path="/visual-prompts" element={<VisualPromptGenerator />} />
                         <Route path="/pipeline" element={<ContentPipeline />} />
+                        <Route path="/library" element={<Library />} />
                         <Route path="*" element={<NotFound />} />
                       </Routes>
                     </Suspense>

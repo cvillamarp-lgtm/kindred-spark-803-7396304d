@@ -25,6 +25,7 @@ const mainNav = [
 
 const toolsNav = [
   { label: "Fábrica", url: "/factory", icon: Factory },
+  { label: "Biblioteca", url: "/library", icon: FileStack },
   { label: "Guiones IA", url: "/scripts", icon: Sparkles },
   { label: "Prompts", url: "/prompts", icon: Wand2 },
   { label: "Visuales", url: "/visual-prompts", icon: Layers },
