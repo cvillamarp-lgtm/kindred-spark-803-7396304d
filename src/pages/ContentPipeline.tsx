@@ -264,7 +264,7 @@ export default function ContentPipeline() {
     <div className="space-y-6 max-w-3xl mx-auto pb-12">
       <PageHeader
         title="Pipeline de Contenido"
-        description="De guión a contenido visual para redes en un clic"
+        subtitle="De guión a contenido visual para redes en un clic"
       />
 
       {/* ── Step 1: Script Input ── */}
