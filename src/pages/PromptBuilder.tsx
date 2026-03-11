@@ -52,7 +52,24 @@ export default function PromptBuilder() {
   const [selectedImage, setSelectedImage] = useState<GeneratedImage | null>(null);
   const [linkEpisodeId, setLinkEpisodeId] = useState<string>("");
   const [referenceImages, setReferenceImages] = useState<string[]>([]);
+  const [hostBase64, setHostBase64] = useState<string>("");
   const queryClient = useQueryClient();
+
+  // Convert host photo to base64 on mount
+  useEffect(() => {
+    const toBase64 = async () => {
+      try {
+        const res = await fetch(hostPhoto);
+        const blob = await res.blob();
+        const reader = new FileReader();
+        reader.onload = () => setHostBase64(reader.result as string);
+        reader.readAsDataURL(blob);
+      } catch (e) {
+        console.error("Error loading host photo:", e);
+      }
+    };
+    toBase64();
+  }, []);
 
   const handleReferenceUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
