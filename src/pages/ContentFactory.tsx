@@ -376,21 +376,26 @@ export default function ContentFactory() {
     }
   };
 
-  // Produce all - automated flow
+  // Produce all - automated flow with piece selection + retry
   const produceAll = async () => {
     if (!script && !title) {
       toast.error("Ingresa al menos un guión o título");
       return;
     }
+    if (selectedPieces.size === 0) {
+      toast.error("Selecciona al menos una pieza");
+      return;
+    }
     setProducing(true);
-    setProdTotal(17); // 1 extract + 1 captions + 15 images
+    const piecesToProduce = VISUAL_PIECES.filter((p) => selectedPieces.has(p.id));
+    setProdTotal(2 + piecesToProduce.length); // 1 extract + 1 captions + N images
     setProdCurrent(0);
 
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.access_token) throw new Error("Sesión expirada");
 
-      // Step 1: Extract content directly (not via extractContent which sets state)
+      // Step 1: Extract content
       setProdStep("Extrayendo contenido...");
       setProdCurrent(1);
 
@@ -415,7 +420,6 @@ export default function ContentFactory() {
       const parsed = parseExtraction(rawData);
       if (!parsed) throw new Error("Respuesta incompleta de IA");
 
-      // Update state with extraction
       setExtraction(parsed);
       const epNum = epNumber.padStart(2, "0") || "XX";
       const mergedCopy: PieceCopyMap = {};
@@ -477,13 +481,14 @@ export default function ContentFactory() {
         }
       } catch (e) {
         console.error("Caption generation error:", e);
-        // Continue even if captions fail
       }
 
-      // Step 3: Generate images one by one
-      for (let i = 0; i < VISUAL_PIECES.length; i++) {
-        const piece = VISUAL_PIECES[i];
-        setProdStep(`Generando imagen ${i + 1}/15: ${piece.shortName}`);
+      // Step 3: Generate images with retry queue
+      const failedPieces: typeof piecesToProduce = [];
+
+      for (let i = 0; i < piecesToProduce.length; i++) {
+        const piece = piecesToProduce[i];
+        setProdStep(`Generando imagen ${i + 1}/${piecesToProduce.length}: ${piece.shortName}`);
         setProdCurrent(3 + i);
 
         const copy = mergedCopy[String(piece.id)] || piece.copyTemplate;
@@ -506,24 +511,66 @@ export default function ContentFactory() {
             const data = await resp.json();
             if (data.imageUrl) {
               handleImageGenerated(piece.id, data.imageUrl, prompt);
+            } else {
+              failedPieces.push(piece);
             }
           } else {
-            console.error(`Error generando pieza ${piece.id}`);
+            failedPieces.push(piece);
           }
         } catch {
-          console.error(`Error en pieza ${piece.id}`);
+          failedPieces.push(piece);
         }
 
-        // Delay to avoid rate limits
-        if (i < VISUAL_PIECES.length - 1) {
+        if (i < piecesToProduce.length - 1) {
           await new Promise((r) => setTimeout(r, 2000));
+        }
+      }
+
+      // Step 4: Retry failed pieces (up to 2 retries each)
+      if (failedPieces.length > 0) {
+        setProdStep(`Reintentando ${failedPieces.length} piezas fallidas...`);
+        for (let retry = 0; retry < 2; retry++) {
+          const stillFailing: typeof piecesToProduce = [];
+          for (const piece of failedPieces) {
+            const copy = mergedCopy[String(piece.id)] || piece.copyTemplate;
+            const prompt = buildPiecePrompt(piece, localEpisodeInput, copy);
+            try {
+              await new Promise((r) => setTimeout(r, 3000));
+              const resp = await fetch(
+                `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-image`,
+                {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${session.access_token}`,
+                  },
+                  body: JSON.stringify({ prompt, hostReference: piece.hostReference }),
+                }
+              );
+              if (resp.ok) {
+                const data = await resp.json();
+                if (data.imageUrl) {
+                  handleImageGenerated(piece.id, data.imageUrl, prompt);
+                  continue;
+                }
+              }
+              stillFailing.push(piece);
+            } catch {
+              stillFailing.push(piece);
+            }
+          }
+          if (stillFailing.length === 0) break;
+          failedPieces.length = 0;
+          failedPieces.push(...stillFailing);
+        }
+        if (failedPieces.length > 0) {
+          toast.error(`${failedPieces.length} piezas no pudieron generarse: ${failedPieces.map(p => p.shortName).join(", ")}`);
         }
       }
 
       // Save all
       setProdStep("Guardando assets...");
-      setProdCurrent(17);
-      // Wait a tick for state to settle before saving
+      setProdCurrent(2 + piecesToProduce.length);
       await new Promise((r) => setTimeout(r, 500));
       await saveToDatabase();
 
