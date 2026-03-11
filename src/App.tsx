@@ -29,6 +29,7 @@ const Resources = lazy(() => import("./pages/Resources"));
 const Scorecard = lazy(() => import("./pages/Scorecard"));
 const Tasks = lazy(() => import("./pages/Tasks"));
 const NotFound = lazy(() => import("./pages/NotFound"));
+const VisualPromptGenerator = lazy(() => import("./pages/VisualPromptGenerator"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
