@@ -254,9 +254,17 @@ export default function PromptBuilder() {
         </CardHeader>
         <CardContent className="space-y-3">
           <p className="text-xs text-muted-foreground">
-            Sube fotos de la persona que aparecerá en la imagen generada. El modelo usará estas referencias para mantener la apariencia.
+            La foto del host se incluye siempre. Puedes agregar más referencias de invitados o personas adicionales.
           </p>
           <div className="flex flex-wrap gap-3 items-start">
+            {/* Host - always present */}
+            <div className="relative w-20 h-20 rounded-lg overflow-hidden border-2 border-primary shadow-sm">
+              <img src={hostPhoto} alt="Host AMTME" className="w-full h-full object-cover" />
+              <span className="absolute bottom-0 left-0 right-0 bg-primary text-primary-foreground text-[9px] text-center py-0.5 font-medium flex items-center justify-center gap-0.5">
+                <Crown className="h-2.5 w-2.5" />Host
+              </span>
+            </div>
+            {/* Additional references */}
             {referenceImages.map((img, i) => (
               <div key={i} className="relative group w-20 h-20 rounded-lg overflow-hidden border border-border">
                 <img src={img} alt={`Ref ${i + 1}`} className="w-full h-full object-cover" />
