@@ -244,7 +244,48 @@ export default function PromptBuilder() {
         </CardContent>
       </Card>
 
-      {/* Custom prompt */}
+      {/* Reference photos */}
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm flex items-center gap-2">
+            <User className="h-4 w-4 text-primary" />Fotos de referencia de personas
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <p className="text-xs text-muted-foreground">
+            Sube fotos de la persona que aparecerá en la imagen generada. El modelo usará estas referencias para mantener la apariencia.
+          </p>
+          <div className="flex flex-wrap gap-3 items-start">
+            {referenceImages.map((img, i) => (
+              <div key={i} className="relative group w-20 h-20 rounded-lg overflow-hidden border border-border">
+                <img src={img} alt={`Ref ${i + 1}`} className="w-full h-full object-cover" />
+                <button
+                  onClick={() => removeReference(i)}
+                  className="absolute top-0.5 right-0.5 bg-destructive text-destructive-foreground rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </div>
+            ))}
+            <Label
+              htmlFor="ref-upload"
+              className="w-20 h-20 rounded-lg border-2 border-dashed border-border hover:border-primary/50 flex flex-col items-center justify-center cursor-pointer transition-colors text-muted-foreground hover:text-foreground"
+            >
+              <Upload className="h-5 w-5 mb-1" />
+              <span className="text-[10px]">Subir</span>
+            </Label>
+            <Input
+              id="ref-upload"
+              type="file"
+              accept="image/*"
+              multiple
+              onChange={handleReferenceUpload}
+              className="hidden"
+            />
+          </div>
+        </CardContent>
+      </Card>
+
       <Card>
         <CardHeader className="pb-2">
           <CardTitle className="text-sm flex items-center gap-2">
