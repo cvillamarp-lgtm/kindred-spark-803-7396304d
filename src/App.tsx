@@ -22,6 +22,7 @@ const BrandStudio = lazy(() => import("./pages/BrandStudio"));
 const DesignStudio = lazy(() => import("./pages/DesignStudio"));
 const PromptBuilder = lazy(() => import("./pages/PromptBuilder"));
 const ScriptGenerator = lazy(() => import("./pages/ScriptGenerator"));
+const ContentFactory = lazy(() => import("./pages/ContentFactory"));
 const Templates = lazy(() => import("./pages/Templates"));
 const MetricsPage = lazy(() => import("./pages/Metrics"));
 const Mentions = lazy(() => import("./pages/Mentions"));
