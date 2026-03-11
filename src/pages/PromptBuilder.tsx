@@ -141,8 +141,9 @@ export default function PromptBuilder() {
     if (!prompt) { toast.error("Selecciona al menos un parámetro"); return; }
     setGenerating(true);
     try {
+      const allRefs = [hostBase64, ...referenceImages].filter(Boolean);
       const { data, error } = await supabase.functions.invoke("generate-image", {
-        body: { prompt, episodeId: linkEpisodeId || undefined, referenceImages: referenceImages.length > 0 ? referenceImages : undefined },
+        body: { prompt, episodeId: linkEpisodeId || undefined, referenceImages: allRefs },
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
