@@ -169,8 +169,9 @@ export default function PromptBuilder() {
     if (!selectedImage || !editPrompt.trim()) { toast.error("Selecciona una imagen y describe los cambios"); return; }
     setEditing(true);
     try {
+      const allRefs = [hostBase64, ...referenceImages].filter(Boolean);
       const { data, error } = await supabase.functions.invoke("generate-image", {
-        body: { prompt: editPrompt, mode: "edit", imageUrl: selectedImage.url, episodeId: linkEpisodeId || undefined, referenceImages: referenceImages.length > 0 ? referenceImages : undefined },
+        body: { prompt: editPrompt, mode: "edit", imageUrl: selectedImage.url, episodeId: linkEpisodeId || undefined, referenceImages: allRefs },
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
