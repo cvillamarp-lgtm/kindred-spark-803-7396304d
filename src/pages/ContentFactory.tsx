@@ -81,8 +81,31 @@ export default function ContentFactory() {
   const [title, setTitle] = useState("");
   const [theme, setTheme] = useState("");
   const [script, setScript] = useState("");
+  const [episodeId, setEpisodeId] = useState<string | null>(null);
 
-  // Pre-fill from URL params
+  // Piece selector
+  const [selectedPieces, setSelectedPieces] = useState<Set<number>>(
+    () => new Set(VISUAL_PIECES.map((p) => p.id))
+  );
+
+  const togglePiece = useCallback((id: number) => {
+    setSelectedPieces((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }, []);
+
+  const selectAllPieces = useCallback(() => {
+    setSelectedPieces(new Set(VISUAL_PIECES.map((p) => p.id)));
+  }, []);
+
+  const selectNoPieces = useCallback(() => {
+    setSelectedPieces(new Set());
+  }, []);
+
+  // Pre-fill from URL params (including episode_id)
   useEffect(() => {
     const num = searchParams.get("number");
     const t = searchParams.get("title");
@@ -91,10 +114,12 @@ export default function ContentFactory() {
     const hook = searchParams.get("hook");
     const quote = searchParams.get("quote");
     const cta = searchParams.get("cta");
+    const epId = searchParams.get("episode_id");
 
     if (num) setEpNumber(num);
     if (t) setTitle(t);
     if (th) setTheme(th);
+    if (epId) setEpisodeId(epId);
 
     const parts = [
       sc ? `Resumen: ${sc}` : "",
