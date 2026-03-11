@@ -7,7 +7,7 @@ import {
   buildInstruction,
   SeccionB,
 } from "@/lib/master-template";
-import PageHeader from "@/components/PageHeader";
+import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
