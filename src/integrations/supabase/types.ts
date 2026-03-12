@@ -207,6 +207,7 @@ export type Database = {
       }
       episodes: {
         Row: {
+          block_states: Json | null
           checklist_assets_json: Json | null
           checklist_qa_json: Json | null
           conflicto: boolean | null
@@ -263,10 +264,12 @@ export type Database = {
           tono: string | null
           updated_at: string
           user_id: string | null
+          version_history: Json | null
           visual_preset_id: string | null
           working_title: string | null
         }
         Insert: {
+          block_states?: Json | null
           checklist_assets_json?: Json | null
           checklist_qa_json?: Json | null
           conflicto?: boolean | null
@@ -323,10 +326,12 @@ export type Database = {
           tono?: string | null
           updated_at?: string
           user_id?: string | null
+          version_history?: Json | null
           visual_preset_id?: string | null
           working_title?: string | null
         }
         Update: {
+          block_states?: Json | null
           checklist_assets_json?: Json | null
           checklist_qa_json?: Json | null
           conflicto?: boolean | null
@@ -383,6 +388,7 @@ export type Database = {
           tono?: string | null
           updated_at?: string
           user_id?: string | null
+          version_history?: Json | null
           visual_preset_id?: string | null
           working_title?: string | null
         }

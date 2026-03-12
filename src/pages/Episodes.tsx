@@ -15,6 +15,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useEpisodes } from "@/hooks/useEpisode";
 import { auditEpisode, getCompletenessLevel } from "@/lib/episode-validation";
+import { initBlockStatesFromAI } from "@/lib/block-states";
 
 export default function Episodes() {
   const [open, setOpen] = useState(false);
@@ -111,6 +112,7 @@ export default function Episodes() {
             descripcion_spotify: fields.descripcion_spotify || null,
             title: fields.working_title || ideaPrincipal.slice(0, 100),
             generation_metadata: metadata,
+            block_states: initBlockStatesFromAI(),
           };
 
           const { error: updateError } = await supabase
