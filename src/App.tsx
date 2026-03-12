@@ -12,35 +12,32 @@ import { lazy, Suspense } from "react";
 // Eager load auth (small, critical path)
 import Auth from "./pages/Auth";
 
-// Lazy load all other pages
+// Lazy load all pages
 const Index = lazy(() => import("./pages/Index"));
-const Audience = lazy(() => import("./pages/Audience"));
-const EditorialCalendar = lazy(() => import("./pages/EditorialCalendar"));
 const Episodes = lazy(() => import("./pages/Episodes"));
-const Guests = lazy(() => import("./pages/Guests"));
-const BrandStudio = lazy(() => import("./pages/BrandStudio"));
-const DesignStudio = lazy(() => import("./pages/DesignStudio"));
-const PromptBuilder = lazy(() => import("./pages/PromptBuilder"));
-const ScriptGenerator = lazy(() => import("./pages/ScriptGenerator"));
+const EpisodeWorkspace = lazy(() => import("./pages/EpisodeWorkspace"));
 const ContentFactory = lazy(() => import("./pages/ContentFactory"));
+const Library = lazy(() => import("./pages/Library"));
 const Templates = lazy(() => import("./pages/Templates"));
 const MetricsPage = lazy(() => import("./pages/Metrics"));
-const Mentions = lazy(() => import("./pages/Mentions"));
-const Resources = lazy(() => import("./pages/Resources"));
-const Scorecard = lazy(() => import("./pages/Scorecard"));
 const Tasks = lazy(() => import("./pages/Tasks"));
+const SystemPage = lazy(() => import("./pages/System"));
+const Resources = lazy(() => import("./pages/Resources"));
 const NotFound = lazy(() => import("./pages/NotFound"));
-const VisualPromptGenerator = lazy(() => import("./pages/VisualPromptGenerator"));
-const ContentPipeline = lazy(() => import("./pages/ContentPipeline"));
-const Library = lazy(() => import("./pages/Library"));
-const EpisodeDetail = lazy(() => import("./pages/EpisodeDetail"));
+
+// Archived routes (still accessible but not in main nav)
+const Audience = lazy(() => import("./pages/Audience"));
+const Guests = lazy(() => import("./pages/Guests"));
+const Mentions = lazy(() => import("./pages/Mentions"));
+const Scorecard = lazy(() => import("./pages/Scorecard"));
+const EditorialCalendar = lazy(() => import("./pages/EditorialCalendar"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       refetchOnWindowFocus: false,
       retry: 1,
-      staleTime: 1000 * 60 * 2, // 2 min stale time to reduce refetches
+      staleTime: 1000 * 60 * 2,
     },
   },
 });
@@ -68,26 +65,25 @@ const App = () => (
                   <AppLayout>
                     <Suspense fallback={<PageLoader />}>
                       <Routes>
+                        {/* Main routes */}
                         <Route path="/" element={<Index />} />
-                        <Route path="/audience" element={<Audience />} />
-                        <Route path="/calendar" element={<EditorialCalendar />} />
                         <Route path="/episodes" element={<Episodes />} />
-                        <Route path="/guests" element={<Guests />} />
-                        <Route path="/brand" element={<BrandStudio />} />
-                        <Route path="/design" element={<DesignStudio />} />
-                        <Route path="/prompts" element={<PromptBuilder />} />
-                        <Route path="/scripts" element={<ScriptGenerator />} />
+                        <Route path="/episodes/:id" element={<EpisodeWorkspace />} />
                         <Route path="/factory" element={<ContentFactory />} />
+                        <Route path="/library" element={<Library />} />
                         <Route path="/templates" element={<Templates />} />
                         <Route path="/metrics" element={<MetricsPage />} />
-                        <Route path="/mentions" element={<Mentions />} />
-                        <Route path="/resources" element={<Resources />} />
-                        <Route path="/scorecard" element={<Scorecard />} />
                         <Route path="/tasks" element={<Tasks />} />
-                        <Route path="/visual-prompts" element={<VisualPromptGenerator />} />
-                        <Route path="/pipeline" element={<ContentPipeline />} />
-                        <Route path="/library" element={<Library />} />
-                        <Route path="/episodes/:id" element={<EpisodeDetail />} />
+                        <Route path="/system" element={<SystemPage />} />
+                        <Route path="/resources" element={<Resources />} />
+                        
+                        {/* Archived routes (accessible but not in nav) */}
+                        <Route path="/audience" element={<Audience />} />
+                        <Route path="/guests" element={<Guests />} />
+                        <Route path="/mentions" element={<Mentions />} />
+                        <Route path="/scorecard" element={<Scorecard />} />
+                        <Route path="/calendar" element={<EditorialCalendar />} />
+                        
                         <Route path="*" element={<NotFound />} />
                       </Routes>
                     </Suspense>
