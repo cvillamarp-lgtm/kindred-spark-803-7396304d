@@ -56,11 +56,11 @@ export function useEpisode(id: string | undefined) {
   });
 
   const updateEpisode = useMutation({
-    mutationFn: async (updates: Record<string, any>) => {
+    mutationFn: async (updates: TablesUpdate<"episodes">) => {
       if (!id) throw new Error("No episode ID");
       const { error } = await supabase
         .from("episodes")
-        .update(updates as any)
+        .update(updates)
         .eq("id", id);
       if (error) throw error;
     },
