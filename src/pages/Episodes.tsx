@@ -8,7 +8,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Progress } from "@/components/ui/progress";
-import { Mic, Plus, Search, Download, Factory } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Mic, Plus, Search, Download, Factory, ChevronDown, Loader2, Sparkles } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -18,32 +19,124 @@ import { auditEpisode, getCompletenessLevel } from "@/lib/episode-validation";
 export default function Episodes() {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
+  const [ideaPrincipal, setIdeaPrincipal] = useState("");
+  const [advancedOpen, setAdvancedOpen] = useState(false);
+  const [conflictoCentral, setConflictoCentral] = useState("");
+  const [intencion, setIntencion] = useState("");
+  const [tono, setTono] = useState("íntimo");
+  const [fechaEstimada, setFechaEstimada] = useState("");
+  const [restricciones, setRestricciones] = useState("");
+  const [isGenerating, setIsGenerating] = useState(false);
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const { data: episodes = [], isLoading } = useEpisodes();
 
-  const addEpisode = useMutation({
-    mutationFn: async (formData: FormData) => {
+  const resetForm = () => {
+    setIdeaPrincipal("");
+    setConflictoCentral("");
+    setIntencion("");
+    setTono("íntimo");
+    setFechaEstimada("");
+    setRestricciones("");
+    setAdvancedOpen(false);
+  };
+
+  const createEpisode = useMutation({
+    mutationFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("No autenticado");
-      const ep = {
+
+      // 1. Count existing episodes to suggest number
+      const { count } = await supabase
+        .from("episodes")
+        .select("*", { count: "exact", head: true })
+        .eq("user_id", user.id);
+      const nextNumber = String((count || 0) + 1).padStart(2, "0");
+
+      // 2. Create episode in draft state
+      const episodeData: Record<string, any> = {
         user_id: user.id,
-        title: formData.get("title") as string,
-        working_title: formData.get("title") as string,
-        number: (formData.get("number") as string) || null,
-        theme: (formData.get("theme") as string) || null,
-        summary: (formData.get("summary") as string) || null,
+        title: ideaPrincipal.slice(0, 100),
+        idea_principal: ideaPrincipal,
+        conflicto_central: conflictoCentral || null,
+        intencion_del_episodio: intencion || null,
+        tono: tono || "íntimo",
+        restricciones: restricciones || null,
+        release_date: fechaEstimada || null,
+        fecha_es_estimada: !!fechaEstimada,
+        status: "draft",
+        estado_produccion: "draft",
         nivel_completitud: "D",
+        number: nextNumber,
       };
-      const { data, error } = await supabase.from("episodes").insert(ep).select("id").single();
-      if (error) throw error;
-      return data;
+
+      const { data: episode, error: insertError } = await supabase
+        .from("episodes")
+        .insert(episodeData as any)
+        .select("id")
+        .single();
+      if (insertError) throw insertError;
+
+      // 3. Call AI to generate 8 fields
+      setIsGenerating(true);
+      try {
+        const { data: fnData, error: fnError } = await supabase.functions.invoke(
+          "generate-episode-fields",
+          {
+            body: {
+              idea_principal: ideaPrincipal,
+              conflicto_central: conflictoCentral || undefined,
+              intencion_del_episodio: intencion || undefined,
+              tono: tono || "íntimo",
+              restricciones: restricciones || undefined,
+              episode_number: nextNumber,
+            },
+          }
+        );
+
+        if (fnError) throw fnError;
+
+        if (fnData?.fields) {
+          const fields = fnData.fields;
+          const metadata = fnData.metadata;
+
+          const updatePayload: Record<string, any> = {
+            working_title: fields.working_title || null,
+            theme: fields.theme || null,
+            core_thesis: fields.core_thesis || null,
+            summary: fields.summary || null,
+            hook: fields.hook || null,
+            cta: fields.cta || null,
+            quote: fields.quote || null,
+            descripcion_spotify: fields.descripcion_spotify || null,
+            title: fields.working_title || ideaPrincipal.slice(0, 100),
+            generation_metadata: metadata,
+          };
+
+          const { error: updateError } = await supabase
+            .from("episodes")
+            .update(updatePayload as any)
+            .eq("id", episode.id);
+
+          if (updateError) {
+            console.error("Failed to save AI fields:", updateError);
+            toast.error("Episodio creado pero falló al guardar campos generados");
+          }
+        }
+      } catch (aiError: any) {
+        console.error("AI generation failed:", aiError);
+        toast.warning("Episodio creado. No se pudieron generar los campos automáticamente. Puedes generarlos desde el workspace.");
+      } finally {
+        setIsGenerating(false);
+      }
+
+      return episode;
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["episodes"] });
       setOpen(false);
+      resetForm();
       toast.success("Episodio creado");
-      // Navigate to workspace immediately
       if (data?.id) navigate(`/episodes/${data.id}`);
     },
     onError: (e) => toast.error(e.message),
@@ -80,6 +173,8 @@ export default function Episodes() {
     !search || ep.title?.toLowerCase().includes(search.toLowerCase()) || ep.number?.includes(search) || ep.theme?.toLowerCase().includes(search.toLowerCase())
   );
 
+  const isPending = createEpisode.isPending || isGenerating;
+
   return (
     <div className="p-6 lg:p-8 h-full flex flex-col animate-fade-in">
       <div className="flex justify-between items-center mb-8">
@@ -91,22 +186,116 @@ export default function Episodes() {
           <Button variant="outline" onClick={exportCSV} disabled={!episodes.length}>
             <Download className="h-4 w-4 mr-2" />CSV
           </Button>
-          <Dialog open={open} onOpenChange={setOpen}>
+          <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) resetForm(); }}>
             <DialogTrigger asChild>
               <Button><Plus className="h-4 w-4 mr-2" />Nuevo Episodio</Button>
             </DialogTrigger>
             <DialogContent className="max-w-lg">
               <DialogHeader><DialogTitle>Nuevo episodio</DialogTitle></DialogHeader>
-              <form onSubmit={(e) => { e.preventDefault(); addEpisode.mutate(new FormData(e.currentTarget)); }} className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div><Label>Título *</Label><Input name="title" required /></div>
-                  <div><Label>Número</Label><Input name="number" placeholder="01" /></div>
+              <div className="space-y-5">
+                {/* Campo obligatorio único */}
+                <div>
+                  <Label className="text-sm font-medium">
+                    Idea principal <span className="text-destructive">*</span>
+                  </Label>
+                  <Textarea
+                    value={ideaPrincipal}
+                    onChange={(e) => setIdeaPrincipal(e.target.value)}
+                    placeholder="Ej: la diferencia entre soltar y rendirse"
+                    rows={3}
+                    className="mt-1.5"
+                    disabled={isPending}
+                  />
+                  <p className="text-xs text-muted-foreground mt-1.5">
+                    El sistema generará automáticamente título, tema, resumen, hook, CTA, quote y descripción Spotify.
+                  </p>
                 </div>
-                <div><Label>Tema</Label><Input name="theme" /></div>
-                <div><Label>Resumen</Label><Textarea name="summary" rows={2} /></div>
-                <p className="text-xs text-muted-foreground">Completa los detalles en el Episode Workspace después de crear.</p>
-                <Button type="submit" className="w-full" disabled={addEpisode.isPending}>Crear y abrir Workspace</Button>
-              </form>
+
+                {/* Opciones avanzadas colapsables */}
+                <Collapsible open={advancedOpen} onOpenChange={setAdvancedOpen}>
+                  <CollapsibleTrigger asChild>
+                    <Button variant="ghost" size="sm" className="w-full justify-between text-muted-foreground hover:text-foreground">
+                      Opciones avanzadas
+                      <ChevronDown className={`h-4 w-4 transition-transform ${advancedOpen ? "rotate-180" : ""}`} />
+                    </Button>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent className="space-y-4 pt-3">
+                    <div>
+                      <Label className="text-sm">Conflicto central</Label>
+                      <Input
+                        value={conflictoCentral}
+                        onChange={(e) => setConflictoCentral(e.target.value)}
+                        placeholder="Ej: querer intimidad pero temer la vulnerabilidad"
+                        disabled={isPending}
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-sm">Intención del episodio</Label>
+                      <Input
+                        value={intencion}
+                        onChange={(e) => setIntencion(e.target.value)}
+                        placeholder="Ej: que el oyente se dé permiso de no tener todo resuelto"
+                        disabled={isPending}
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-sm">Tono</Label>
+                      <Select value={tono} onValueChange={setTono} disabled={isPending}>
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="íntimo">Íntimo</SelectItem>
+                          <SelectItem value="confrontador">Confrontador</SelectItem>
+                          <SelectItem value="reflexivo">Reflexivo</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label className="text-sm">Fecha estimada</Label>
+                      <Input
+                        type="date"
+                        value={fechaEstimada}
+                        onChange={(e) => setFechaEstimada(e.target.value)}
+                        disabled={isPending}
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-sm">Restricciones</Label>
+                      <Textarea
+                        value={restricciones}
+                        onChange={(e) => setRestricciones(e.target.value)}
+                        placeholder="Ej: no mencionar religión organizada, enfocarse en relaciones"
+                        rows={2}
+                        disabled={isPending}
+                      />
+                    </div>
+                  </CollapsibleContent>
+                </Collapsible>
+
+                {/* Botón de creación */}
+                <Button
+                  onClick={() => createEpisode.mutate()}
+                  className="w-full"
+                  disabled={!ideaPrincipal.trim() || isPending}
+                >
+                  {isPending ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      {isGenerating ? "Generando campos con IA..." : "Creando episodio..."}
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="h-4 w-4 mr-2" />
+                      Crear episodio
+                    </>
+                  )}
+                </Button>
+
+                {isGenerating && (
+                  <p className="text-xs text-muted-foreground text-center animate-pulse">
+                    Generando título, tema, resumen, hook, CTA, quote y descripción Spotify...
+                  </p>
+                )}
+              </div>
             </DialogContent>
           </Dialog>
         </div>

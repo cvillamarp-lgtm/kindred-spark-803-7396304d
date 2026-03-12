@@ -114,6 +114,19 @@ export function WorkspaceSummary({ episode, assetCount, taskCount }: Props) {
         )}
       </div>
 
+      {/* Idea principal */}
+      {episode.idea_principal && (
+        <div className="surface p-5 border-l-2 border-primary">
+          <h3 className="text-sm font-medium text-foreground mb-2">Idea principal</h3>
+          <p className="text-sm text-muted-foreground italic">"{episode.idea_principal}"</p>
+          {episode.generation_metadata?.source_type === "ai_generated" && (
+            <p className="text-[10px] text-muted-foreground mt-2">
+              Campos generados por IA · {new Date(episode.generation_metadata.generated_at).toLocaleDateString("es-MX")}
+            </p>
+          )}
+        </div>
+      )}
+
       {/* Summary text */}
       {episode.summary && (
         <div className="surface p-5">
