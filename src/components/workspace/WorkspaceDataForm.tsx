@@ -1,12 +1,25 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Save, Loader2 } from "lucide-react";
+import { Save, Loader2, Check, AlertTriangle, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
+import { BlockWrapper } from "./BlockWrapper";
+import {
+  BlockStatesMap,
+  VersionHistoryMap,
+  VersionEntry,
+  applyStaleToStates,
+  countStaleBlocks,
+  getStaleFields,
+  addVersionEntry,
+  FIELD_LABELS,
+  BASE_FIELDS,
+} from "@/lib/block-states";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Props {
   episode: Record<string, any>;
@@ -14,8 +27,20 @@ interface Props {
   isSaving: boolean;
 }
 
+/** Fields that trigger dependency propagation when changed */
+const PROPAGATING_FIELDS = ["idea_principal", "theme", "core_thesis", "summary", "hook", "cta", "template_id", "visual_preset_id"];
+
+/** Fields wrapped with BlockWrapper (AI-tracked) */
+const BLOCK_FIELDS = [...BASE_FIELDS] as string[];
+
 export function WorkspaceDataForm({ episode, onSave, isSaving }: Props) {
   const [form, setForm] = useState<Record<string, any>>({});
+  const [blockStates, setBlockStates] = useState<BlockStatesMap>({});
+  const [versionHistory, setVersionHistory] = useState<VersionHistoryMap>({});
+  const [autoSaveStatus, setAutoSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
+  const [regeneratingField, setRegeneratingField] = useState<string | null>(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastSavedRef = useRef<string>("");
 
   useEffect(() => {
     if (episode) {
@@ -40,19 +65,181 @@ export function WorkspaceDataForm({ episode, onSave, isSaving }: Props) {
         fecha_es_estimada: episode.fecha_es_estimada || false,
         nivel_completitud: episode.nivel_completitud || "D",
       });
+      setBlockStates((episode.block_states as BlockStatesMap) || {});
+      setVersionHistory((episode.version_history as VersionHistoryMap) || {});
     }
   }, [episode]);
 
+  // ─── Autosave with 2s debounce ─────────────────────────────────────
+  const doAutoSave = useCallback(async (formData: Record<string, any>, states: BlockStatesMap, history: VersionHistoryMap) => {
+    const payload = {
+      ...formData,
+      title: formData.final_title || formData.working_title,
+      conflicto: formData.conflicto_detectado,
+      block_states: states,
+      version_history: history,
+    };
+    const hash = JSON.stringify(payload);
+    if (hash === lastSavedRef.current) return;
+
+    setAutoSaveStatus("saving");
+    try {
+      await onSave(payload);
+      lastSavedRef.current = hash;
+      setAutoSaveStatus("saved");
+      setTimeout(() => setAutoSaveStatus("idle"), 2000);
+    } catch {
+      setAutoSaveStatus("idle");
+    }
+  }, [onSave]);
+
+  const scheduleAutoSave = useCallback((formData: Record<string, any>, states: BlockStatesMap, history: VersionHistoryMap) => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => doAutoSave(formData, states, history), 2000);
+  }, [doAutoSave]);
+
+  // ─── Field update with dependency propagation ──────────────────────
   const update = (key: string, value: any) => {
-    setForm(prev => ({ ...prev, [key]: value }));
+    const newForm = { ...form, [key]: value };
+    let newStates = { ...blockStates };
+    let newHistory = { ...versionHistory };
+
+    // If this is a block field being manually edited, track it
+    if (BLOCK_FIELDS.includes(key)) {
+      // Save current value to version history before changing
+      const currentValue = form[key];
+      if (currentValue) {
+        newHistory = addVersionEntry(newHistory, key, currentValue, newStates[key]?.source_type || "initial");
+      }
+
+      // Mark as edited
+      newStates[key] = {
+        status: "edited",
+        updated_at: new Date().toISOString(),
+        source_type: "edited",
+      };
+    }
+
+    // Propagate stale if this field has dependents
+    if (PROPAGATING_FIELDS.includes(key)) {
+      const { newStates: propagated, approvedWarnings } = applyStaleToStates(key, newStates);
+      newStates = propagated;
+
+      if (approvedWarnings.length > 0) {
+        const names = approvedWarnings.map(f => FIELD_LABELS[f] || f).join(", ");
+        toast.info(`Campos aprobados afectados: ${names}. Revísalos manualmente.`);
+      }
+    }
+
+    setForm(newForm);
+    setBlockStates(newStates);
+    setVersionHistory(newHistory);
+    scheduleAutoSave(newForm, newStates, newHistory);
   };
 
+  // ─── Approve a block ──────────────────────────────────────────────
+  const approveBlock = (fieldName: string) => {
+    const newStates = { ...blockStates };
+    newStates[fieldName] = {
+      status: "approved",
+      updated_at: new Date().toISOString(),
+      source_type: "approved",
+    };
+    setBlockStates(newStates);
+    scheduleAutoSave(form, newStates, versionHistory);
+    toast.success(`${FIELD_LABELS[fieldName] || fieldName} aprobado`);
+  };
+
+  // ─── Dismiss stale ────────────────────────────────────────────────
+  const dismissStale = (fieldName: string) => {
+    const newStates = { ...blockStates };
+    if (newStates[fieldName]) {
+      newStates[fieldName] = {
+        ...newStates[fieldName],
+        status: "edited",
+        stale_reason: undefined,
+      };
+    }
+    setBlockStates(newStates);
+    scheduleAutoSave(form, newStates, versionHistory);
+  };
+
+  // ─── Regenerate single field ──────────────────────────────────────
+  const regenerateField = async (fieldName: string) => {
+    setRegeneratingField(fieldName);
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-episode-fields", {
+        body: {
+          mode: "regenerate_field",
+          field_name: fieldName,
+          idea_principal: episode.idea_principal,
+          episode_number: episode.number,
+          current_fields: {
+            working_title: form.working_title,
+            theme: form.theme,
+            core_thesis: form.core_thesis,
+            summary: form.summary,
+            hook: form.hook,
+            cta: form.cta,
+            quote: form.quote,
+            descripcion_spotify: form.descripcion_spotify,
+          },
+        },
+      });
+
+      if (error) throw error;
+      if (!data?.value) throw new Error("No value returned");
+
+      // Save current to history
+      let newHistory = { ...versionHistory };
+      if (form[fieldName]) {
+        newHistory = addVersionEntry(newHistory, fieldName, form[fieldName], blockStates[fieldName]?.source_type || "initial");
+      }
+
+      const newForm = { ...form, [fieldName]: data.value };
+      const newStates = { ...blockStates };
+      newStates[fieldName] = {
+        status: "generated",
+        updated_at: new Date().toISOString(),
+        source_type: "ai_regenerated",
+      };
+
+      setForm(newForm);
+      setBlockStates(newStates);
+      setVersionHistory(newHistory);
+      scheduleAutoSave(newForm, newStates, newHistory);
+      toast.success(`${FIELD_LABELS[fieldName] || fieldName} regenerado`);
+    } catch (e: any) {
+      toast.error(`Error al regenerar: ${e.message}`);
+    } finally {
+      setRegeneratingField(null);
+    }
+  };
+
+  // ─── Restore version ─────────────────────────────────────────────
+  const restoreVersion = (fieldName: string, entry: VersionEntry) => {
+    const newForm = { ...form, [fieldName]: entry.value };
+    const newStates = { ...blockStates };
+    newStates[fieldName] = {
+      status: "edited",
+      updated_at: new Date().toISOString(),
+      source_type: "edited",
+    };
+    setForm(newForm);
+    setBlockStates(newStates);
+    scheduleAutoSave(newForm, newStates, versionHistory);
+    toast.success(`${FIELD_LABELS[fieldName] || fieldName} restaurado`);
+  };
+
+  // ─── Manual save ──────────────────────────────────────────────────
   const handleSave = async () => {
     try {
       await onSave({
         ...form,
         title: form.final_title || form.working_title,
         conflicto: form.conflicto_detectado,
+        block_states: blockStates,
+        version_history: versionHistory,
       });
       toast.success("Episodio actualizado");
     } catch (e: any) {
@@ -60,14 +247,76 @@ export function WorkspaceDataForm({ episode, onSave, isSaving }: Props) {
     }
   };
 
+  const staleCount = countStaleBlocks(blockStates);
+
+  // Helper to render a block-wrapped field
+  const renderBlock = (fieldName: string, children: ReactNode) => (
+    <BlockWrapper
+      fieldName={fieldName}
+      state={blockStates[fieldName]}
+      onRegenerate={() => regenerateField(fieldName)}
+      onApprove={() => approveBlock(fieldName)}
+      onDismissStale={() => dismissStale(fieldName)}
+      onRestoreVersion={(entry) => restoreVersion(fieldName, entry)}
+      isRegenerating={regeneratingField === fieldName}
+      versionHistory={versionHistory[fieldName] || []}
+    >
+      {children}
+    </BlockWrapper>
+  );
+
   return (
     <div className="space-y-6">
-      <div className="flex justify-end">
-        <Button onClick={handleSave} disabled={isSaving}>
+      {/* Header with save status */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          {autoSaveStatus === "saving" && (
+            <span className="text-xs text-muted-foreground flex items-center gap-1">
+              <Loader2 className="h-3 w-3 animate-spin" />Guardando...
+            </span>
+          )}
+          {autoSaveStatus === "saved" && (
+            <span className="text-xs text-emerald-500 flex items-center gap-1">
+              <Check className="h-3 w-3" />Guardado
+            </span>
+          )}
+          {staleCount > 0 && (
+            <span className="text-xs text-orange-500 flex items-center gap-1 animate-pulse">
+              <AlertTriangle className="h-3 w-3" />{staleCount} bloque{staleCount > 1 ? "s" : ""} desactualizado{staleCount > 1 ? "s" : ""}
+            </span>
+          )}
+        </div>
+        <Button onClick={handleSave} disabled={isSaving} size="sm">
           {isSaving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
-          Guardar cambios
+          Guardar
         </Button>
       </div>
+
+      {/* Stale banner with global regen */}
+      {staleCount > 0 && (
+        <div className="bg-orange-500/5 border border-orange-500/20 rounded-lg p-3 flex items-center justify-between">
+          <p className="text-sm text-orange-600">
+            {staleCount} bloque{staleCount > 1 ? "s" : ""} desactualizado{staleCount > 1 ? "s" : ""}. Revisa o regenera.
+          </p>
+          <Button
+            variant="outline"
+            size="sm"
+            className="text-xs border-orange-500/30 text-orange-600"
+            onClick={async () => {
+              const fields = getStaleFields(blockStates);
+              for (const f of fields) {
+                if (BASE_FIELDS.includes(f as any)) {
+                  await regenerateField(f);
+                }
+              }
+            }}
+            disabled={!!regeneratingField}
+          >
+            <RefreshCw className={`h-3 w-3 mr-1 ${regeneratingField ? "animate-spin" : ""}`} />
+            Regenerar todo
+          </Button>
+        </div>
+      )}
 
       {/* Identificación */}
       <div className="surface p-5 space-y-4">
@@ -87,7 +336,9 @@ export function WorkspaceDataForm({ episode, onSave, isSaving }: Props) {
             </Select>
           </div>
         </div>
-        <div><Label>Título de trabajo *</Label><Input value={form.working_title} onChange={(e) => update("working_title", e.target.value)} /></div>
+        {renderBlock("working_title",
+          <Input value={form.working_title} onChange={(e) => update("working_title", e.target.value)} />
+        )}
         <div><Label>Título final</Label><Input value={form.final_title} onChange={(e) => update("final_title", e.target.value)} /></div>
         <div><Label>Título original (si cambió)</Label><Input value={form.titulo_original} onChange={(e) => update("titulo_original", e.target.value)} /></div>
       </div>
@@ -95,18 +346,32 @@ export function WorkspaceDataForm({ episode, onSave, isSaving }: Props) {
       {/* Contenido */}
       <div className="surface p-5 space-y-4">
         <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Contenido</p>
-        <div><Label>Tema *</Label><Input value={form.theme} onChange={(e) => update("theme", e.target.value)} /></div>
-        <div><Label>Tesis central</Label><Textarea value={form.core_thesis} onChange={(e) => update("core_thesis", e.target.value)} rows={2} placeholder="La idea central que sostiene el episodio" /></div>
-        <div><Label>Resumen *</Label><Textarea value={form.summary} onChange={(e) => update("summary", e.target.value)} rows={3} /></div>
-        <div><Label>Hook</Label><Textarea value={form.hook} onChange={(e) => update("hook", e.target.value)} rows={2} placeholder="Frase de apertura" /></div>
-        <div><Label>CTA *</Label><Textarea value={form.cta} onChange={(e) => update("cta", e.target.value)} rows={2} placeholder="Llamada a la acción" /></div>
-        <div><Label>Quote</Label><Input value={form.quote} onChange={(e) => update("quote", e.target.value)} placeholder="Frase destacable del episodio" /></div>
+        {renderBlock("theme",
+          <Input value={form.theme} onChange={(e) => update("theme", e.target.value)} />
+        )}
+        {renderBlock("core_thesis",
+          <Textarea value={form.core_thesis} onChange={(e) => update("core_thesis", e.target.value)} rows={2} placeholder="La idea central que sostiene el episodio" />
+        )}
+        {renderBlock("summary",
+          <Textarea value={form.summary} onChange={(e) => update("summary", e.target.value)} rows={3} />
+        )}
+        {renderBlock("hook",
+          <Textarea value={form.hook} onChange={(e) => update("hook", e.target.value)} rows={2} placeholder="Frase de apertura" />
+        )}
+        {renderBlock("cta",
+          <Textarea value={form.cta} onChange={(e) => update("cta", e.target.value)} rows={2} placeholder="Llamada a la acción" />
+        )}
+        {renderBlock("quote",
+          <Input value={form.quote} onChange={(e) => update("quote", e.target.value)} placeholder="Frase destacable del episodio" />
+        )}
       </div>
 
       {/* Distribución */}
       <div className="surface p-5 space-y-4">
         <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Distribución</p>
-        <div><Label>Descripción Spotify *</Label><Textarea value={form.descripcion_spotify} onChange={(e) => update("descripcion_spotify", e.target.value)} rows={3} /></div>
+        {renderBlock("descripcion_spotify",
+          <Textarea value={form.descripcion_spotify} onChange={(e) => update("descripcion_spotify", e.target.value)} rows={3} />
+        )}
         <div><Label>Link Spotify</Label><Input value={form.link_spotify} onChange={(e) => update("link_spotify", e.target.value)} placeholder="https://open.spotify.com/episode/..." /></div>
         <div className="grid grid-cols-2 gap-4">
           <div><Label>Fecha de lanzamiento</Label><Input type="date" value={form.release_date} onChange={(e) => update("release_date", e.target.value)} /></div>
