@@ -2,6 +2,7 @@ import { Home, Users, Calendar, Mic, UserPlus, Image, BookOpen, BarChart3, FileT
 import { supabase } from "@/integrations/supabase/client";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
+import { useSidebarCounts } from "@/components/sidebar/SidebarBadges";
 import {
   Sidebar,
   SidebarContent,
@@ -15,7 +16,14 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 
-const mainNav = [
+interface NavItem {
+  label: string;
+  url: string;
+  icon: any;
+  badgeKey?: "pendingTasks" | "pendingAssets";
+}
+
+const mainNav: NavItem[] = [
   { label: "Dashboard", url: "/", icon: Home },
   { label: "Episodios", url: "/episodes", icon: Mic },
   { label: "Calendario", url: "/calendar", icon: Calendar },
@@ -23,9 +31,9 @@ const mainNav = [
   { label: "Templates", url: "/templates", icon: FileStack },
 ];
 
-const toolsNav = [
+const toolsNav: NavItem[] = [
   { label: "Fábrica", url: "/factory", icon: Factory },
-  { label: "Biblioteca", url: "/library", icon: FileStack },
+  { label: "Biblioteca", url: "/library", icon: FileStack, badgeKey: "pendingAssets" },
   { label: "Guiones IA", url: "/scripts", icon: Sparkles },
   { label: "Prompts", url: "/prompts", icon: Wand2 },
   { label: "Visuales", url: "/visual-prompts", icon: Layers },
@@ -34,19 +42,19 @@ const toolsNav = [
   { label: "Brand", url: "/brand", icon: Image },
 ];
 
-const analyticsNav = [
+const analyticsNav: NavItem[] = [
   { label: "Métricas", url: "/metrics", icon: BarChart3 },
   { label: "Audiencia", url: "/audience", icon: Users },
   { label: "Menciones", url: "/mentions", icon: AtSign },
   { label: "Score", url: "/scorecard", icon: Settings },
 ];
 
-const moreNav = [
-  { label: "Tareas", url: "/tasks", icon: ListTodo },
+const moreNav: NavItem[] = [
+  { label: "Tareas", url: "/tasks", icon: ListTodo, badgeKey: "pendingTasks" },
   { label: "Recursos", url: "/resources", icon: FileText },
 ];
 
-function NavGroup({ label, items, collapsed }: { label: string; items: typeof mainNav; collapsed: boolean }) {
+function NavGroup({ label, items, collapsed, counts }: { label: string; items: NavItem[]; collapsed: boolean; counts?: Record<string, number> }) {
   const location = useLocation();
   return (
     <SidebarGroup>
@@ -55,12 +63,22 @@ function NavGroup({ label, items, collapsed }: { label: string; items: typeof ma
         <SidebarMenu>
           {items.map((item) => {
             const isActive = location.pathname === item.url;
+            const badgeCount = item.badgeKey && counts ? counts[item.badgeKey] : 0;
             return (
               <SidebarMenuItem key={item.label}>
                 <SidebarMenuButton asChild isActive={isActive}>
                   <NavLink to={item.url} end={item.url === "/"} activeClassName="bg-sidebar-accent text-sidebar-primary-foreground font-medium">
                     <item.icon className="h-4 w-4" />
-                    {!collapsed && <span>{item.label}</span>}
+                    {!collapsed && (
+                      <span className="flex-1 flex items-center justify-between">
+                        <span>{item.label}</span>
+                        {badgeCount > 0 && (
+                          <span className="ml-auto text-[10px] font-medium bg-primary/15 text-primary px-1.5 py-0.5 rounded-full min-w-[18px] text-center">
+                            {badgeCount}
+                          </span>
+                        )}
+                      </span>
+                    )}
                   </NavLink>
                 </SidebarMenuButton>
               </SidebarMenuItem>
@@ -75,6 +93,9 @@ function NavGroup({ label, items, collapsed }: { label: string; items: typeof ma
 export function AppSidebar() {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
+  const { data: counts } = useSidebarCounts();
+
+  const countsMap = counts ? { pendingTasks: counts.pendingTasks, pendingAssets: counts.pendingAssets } : undefined;
 
   return (
     <Sidebar collapsible="icon" className="border-r-0">
@@ -90,10 +111,10 @@ export function AppSidebar() {
       </div>
 
       <SidebarContent>
-        <NavGroup label="Producción" items={mainNav} collapsed={collapsed} />
-        <NavGroup label="Herramientas" items={toolsNav} collapsed={collapsed} />
-        <NavGroup label="Analítica" items={analyticsNav} collapsed={collapsed} />
-        <NavGroup label="Más" items={moreNav} collapsed={collapsed} />
+        <NavGroup label="Producción" items={mainNav} collapsed={collapsed} counts={countsMap} />
+        <NavGroup label="Herramientas" items={toolsNav} collapsed={collapsed} counts={countsMap} />
+        <NavGroup label="Analítica" items={analyticsNav} collapsed={collapsed} counts={countsMap} />
+        <NavGroup label="Más" items={moreNav} collapsed={collapsed} counts={countsMap} />
       </SidebarContent>
 
       <SidebarFooter>

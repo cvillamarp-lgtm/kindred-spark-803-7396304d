@@ -87,6 +87,7 @@ const App = () => (
                         <Route path="/visual-prompts" element={<VisualPromptGenerator />} />
                         <Route path="/pipeline" element={<ContentPipeline />} />
                         <Route path="/library" element={<Library />} />
+                        <Route path="/episodes/:id" element={<EpisodeDetail />} />
                         <Route path="*" element={<NotFound />} />
                       </Routes>
                     </Suspense>
