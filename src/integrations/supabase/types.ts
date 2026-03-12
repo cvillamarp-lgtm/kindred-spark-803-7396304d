@@ -103,6 +103,7 @@ export type Database = {
       }
       content_assets: {
         Row: {
+          approved_at: string | null
           caption: string | null
           created_at: string | null
           episode_id: string | null
@@ -112,11 +113,15 @@ export type Database = {
           piece_id: number
           piece_name: string
           prompt_used: string | null
+          published_at: string | null
           status: string | null
+          template_id: string | null
           updated_at: string | null
           user_id: string
+          variant_name: string | null
         }
         Insert: {
+          approved_at?: string | null
           caption?: string | null
           created_at?: string | null
           episode_id?: string | null
@@ -126,11 +131,15 @@ export type Database = {
           piece_id: number
           piece_name: string
           prompt_used?: string | null
+          published_at?: string | null
           status?: string | null
+          template_id?: string | null
           updated_at?: string | null
           user_id: string
+          variant_name?: string | null
         }
         Update: {
+          approved_at?: string | null
           caption?: string | null
           created_at?: string | null
           episode_id?: string | null
@@ -140,9 +149,12 @@ export type Database = {
           piece_id?: number
           piece_name?: string
           prompt_used?: string | null
+          published_at?: string | null
           status?: string | null
+          template_id?: string | null
           updated_at?: string | null
           user_id?: string
+          variant_name?: string | null
         }
         Relationships: [
           {
@@ -195,114 +207,176 @@ export type Database = {
       }
       episodes: {
         Row: {
+          checklist_assets_json: Json | null
+          checklist_qa_json: Json | null
           conflicto: boolean | null
+          conflicto_detectado: boolean | null
           conflicto_nota: string | null
+          core_thesis: string | null
           cover_image_url: string | null
           created_at: string
           cta: string | null
+          derived_copies_json: Json | null
           descripcion_spotify: string | null
           distribution_status: string | null
           duration: string | null
           editing_status: string | null
+          estado_produccion: string | null
+          estado_publicacion: string | null
           estado_validacion: string | null
           fecha_es_estimada: boolean | null
+          final_title: string | null
+          health_score: number | null
           hook: string | null
           id: string
           link_spotify: string | null
           nivel_completitud: string | null
           nota_trazabilidad: string | null
           number: string | null
+          prompt_set_json: Json | null
+          publication_blockers_json: Json | null
           quote: string | null
+          ready_for_production: boolean | null
+          ready_for_publish: boolean | null
           recording_status: string | null
           release_date: string | null
           retencion_q1: number | null
           retencion_q2: number | null
           retencion_q3: number | null
           retencion_q4: number | null
+          script_base: string | null
+          script_generated: string | null
           script_status: string | null
           status: string | null
           streams_total: number | null
           summary: string | null
           tags: string[] | null
+          template_id: string | null
           theme: string | null
           title: string
           titulo_original: string | null
           updated_at: string
           user_id: string | null
+          visual_preset_id: string | null
+          working_title: string | null
         }
         Insert: {
+          checklist_assets_json?: Json | null
+          checklist_qa_json?: Json | null
           conflicto?: boolean | null
+          conflicto_detectado?: boolean | null
           conflicto_nota?: string | null
+          core_thesis?: string | null
           cover_image_url?: string | null
           created_at?: string
           cta?: string | null
+          derived_copies_json?: Json | null
           descripcion_spotify?: string | null
           distribution_status?: string | null
           duration?: string | null
           editing_status?: string | null
+          estado_produccion?: string | null
+          estado_publicacion?: string | null
           estado_validacion?: string | null
           fecha_es_estimada?: boolean | null
+          final_title?: string | null
+          health_score?: number | null
           hook?: string | null
           id?: string
           link_spotify?: string | null
           nivel_completitud?: string | null
           nota_trazabilidad?: string | null
           number?: string | null
+          prompt_set_json?: Json | null
+          publication_blockers_json?: Json | null
           quote?: string | null
+          ready_for_production?: boolean | null
+          ready_for_publish?: boolean | null
           recording_status?: string | null
           release_date?: string | null
           retencion_q1?: number | null
           retencion_q2?: number | null
           retencion_q3?: number | null
           retencion_q4?: number | null
+          script_base?: string | null
+          script_generated?: string | null
           script_status?: string | null
           status?: string | null
           streams_total?: number | null
           summary?: string | null
           tags?: string[] | null
+          template_id?: string | null
           theme?: string | null
           title: string
           titulo_original?: string | null
           updated_at?: string
           user_id?: string | null
+          visual_preset_id?: string | null
+          working_title?: string | null
         }
         Update: {
+          checklist_assets_json?: Json | null
+          checklist_qa_json?: Json | null
           conflicto?: boolean | null
+          conflicto_detectado?: boolean | null
           conflicto_nota?: string | null
+          core_thesis?: string | null
           cover_image_url?: string | null
           created_at?: string
           cta?: string | null
+          derived_copies_json?: Json | null
           descripcion_spotify?: string | null
           distribution_status?: string | null
           duration?: string | null
           editing_status?: string | null
+          estado_produccion?: string | null
+          estado_publicacion?: string | null
           estado_validacion?: string | null
           fecha_es_estimada?: boolean | null
+          final_title?: string | null
+          health_score?: number | null
           hook?: string | null
           id?: string
           link_spotify?: string | null
           nivel_completitud?: string | null
           nota_trazabilidad?: string | null
           number?: string | null
+          prompt_set_json?: Json | null
+          publication_blockers_json?: Json | null
           quote?: string | null
+          ready_for_production?: boolean | null
+          ready_for_publish?: boolean | null
           recording_status?: string | null
           release_date?: string | null
           retencion_q1?: number | null
           retencion_q2?: number | null
           retencion_q3?: number | null
           retencion_q4?: number | null
+          script_base?: string | null
+          script_generated?: string | null
           script_status?: string | null
           status?: string | null
           streams_total?: number | null
           summary?: string | null
           tags?: string[] | null
+          template_id?: string | null
           theme?: string | null
           title?: string
           titulo_original?: string | null
           updated_at?: string
           user_id?: string | null
+          visual_preset_id?: string | null
+          working_title?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "fk_episodes_template"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "episode_templates"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       generation_history: {
         Row: {
@@ -410,9 +484,14 @@ export type Database = {
         Row: {
           created_at: string
           date: string | null
+          episode_id: string | null
           id: string
+          metric_group: string | null
           name: string | null
+          notes: string | null
           source: string | null
+          source_file_name: string | null
+          source_import_batch: string | null
           unit: string | null
           user_id: string | null
           value: number | null
@@ -420,9 +499,14 @@ export type Database = {
         Insert: {
           created_at?: string
           date?: string | null
+          episode_id?: string | null
           id?: string
+          metric_group?: string | null
           name?: string | null
+          notes?: string | null
           source?: string | null
+          source_file_name?: string | null
+          source_import_batch?: string | null
           unit?: string | null
           user_id?: string | null
           value?: number | null
@@ -430,19 +514,33 @@ export type Database = {
         Update: {
           created_at?: string
           date?: string | null
+          episode_id?: string | null
           id?: string
+          metric_group?: string | null
           name?: string | null
+          notes?: string | null
           source?: string | null
+          source_file_name?: string | null
+          source_import_batch?: string | null
           unit?: string | null
           user_id?: string | null
           value?: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "metrics_episode_id_fkey"
+            columns: ["episode_id"]
+            isOneToOne: false
+            referencedRelation: "episodes"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       resources: {
         Row: {
           created_at: string
           description: string | null
+          episode_id: string | null
           id: string
           link: string | null
           status: string | null
@@ -454,6 +552,7 @@ export type Database = {
         Insert: {
           created_at?: string
           description?: string | null
+          episode_id?: string | null
           id?: string
           link?: string | null
           status?: string | null
@@ -465,6 +564,7 @@ export type Database = {
         Update: {
           created_at?: string
           description?: string | null
+          episode_id?: string | null
           id?: string
           link?: string | null
           status?: string | null
@@ -473,46 +573,74 @@ export type Database = {
           updated_at?: string
           user_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "resources_episode_id_fkey"
+            columns: ["episode_id"]
+            isOneToOne: false
+            referencedRelation: "episodes"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       tasks: {
         Row: {
+          blocking: boolean | null
           category: string | null
           created_at: string
           description: string | null
           due_date: string | null
+          episode_id: string | null
           id: string
           priority: string | null
+          sort_order: number | null
           status: string | null
+          task_type: string | null
           title: string | null
           updated_at: string
           user_id: string | null
         }
         Insert: {
+          blocking?: boolean | null
           category?: string | null
           created_at?: string
           description?: string | null
           due_date?: string | null
+          episode_id?: string | null
           id?: string
           priority?: string | null
+          sort_order?: number | null
           status?: string | null
+          task_type?: string | null
           title?: string | null
           updated_at?: string
           user_id?: string | null
         }
         Update: {
+          blocking?: boolean | null
           category?: string | null
           created_at?: string
           description?: string | null
           due_date?: string | null
+          episode_id?: string | null
           id?: string
           priority?: string | null
+          sort_order?: number | null
           status?: string | null
+          task_type?: string | null
           title?: string | null
           updated_at?: string
           user_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "tasks_episode_id_fkey"
+            columns: ["episode_id"]
+            isOneToOne: false
+            referencedRelation: "episodes"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
