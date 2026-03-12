@@ -50,12 +50,7 @@ function ScriptGeneratorMini({ onScriptGenerated }: { onScriptGenerated: (s: str
     setIsGenerating(true);
     setPreview("");
     try {
-      const res = await supabase.functions.invoke("generate-script", {
-        body: { theme, format },
-      });
-      if (res.error) throw new Error(res.error.message);
-
-      // SSE stream not available via invoke — use fetch directly
+      // F: Single invocation — use fetch directly for SSE streaming
       const session = await supabase.auth.getSession();
       const token = session.data.session?.access_token;
       const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-script`;
