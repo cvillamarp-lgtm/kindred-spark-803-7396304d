@@ -6,11 +6,11 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-// Two mandatory host references — one per image type
-const HOST_REFERENCES = {
-  imagen01: "https://knjhhmqthkpucfxpdhxj.supabase.co/storage/v1/object/public/generated-images/host-imagen01.png",
-  imagen02: "https://knjhhmqthkpucfxpdhxj.supabase.co/storage/v1/object/public/generated-images/host-imagen02.png",
-};
+// Build host reference URLs dynamically from SUPABASE_URL
+function getHostReferenceUrl(key: "imagen01" | "imagen02"): string {
+  const baseUrl = Deno.env.get("SUPABASE_URL")!;
+  return `${baseUrl}/storage/v1/object/public/generated-images/host-${key}.png`;
+}
 
 const AMTME_BRAND_PROMPT = `INSTRUCCIÓN MAESTRA DE IMAGEN — AMTME (A MÍ TAMPOCO ME EXPLICARON)
 
@@ -102,11 +102,12 @@ serve(async (req) => {
       });
     }
 
-    const supabaseAuth = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_ANON_KEY")!,
-      { global: { headers: { Authorization: authHeader } } }
-    );
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+
+    const supabaseAuth = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } },
+    });
 
     const token = authHeader.replace("Bearer ", "");
     const { data: claimsData, error: claimsError } = await supabaseAuth.auth.getClaims(token);
@@ -116,6 +117,9 @@ serve(async (req) => {
       });
     }
 
+    // C: Extract authenticated user ID for ownership validation
+    const userId = claimsData.claims.sub as string;
+
     const body = await req.json();
     const { prompt, mode, imageUrl: editImageUrl, episodeId, referenceImages, hostReference } = body;
     
@@ -124,11 +128,11 @@ serve(async (req) => {
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
-    // Select host reference based on piece type (default to both)
-    const hostRef = hostReference as keyof typeof HOST_REFERENCES;
-    const hostUrls = hostRef && HOST_REFERENCES[hostRef]
-      ? [HOST_REFERENCES[hostRef]]
-      : [HOST_REFERENCES.imagen01, HOST_REFERENCES.imagen02];
+    // G: Build host reference URLs dynamically
+    const hostRef = hostReference as "imagen01" | "imagen02" | undefined;
+    const hostUrls = hostRef
+      ? [getHostReferenceUrl(hostRef)]
+      : [getHostReferenceUrl("imagen01"), getHostReferenceUrl("imagen02")];
 
     const allReferenceImages = [...hostUrls, ...(referenceImages || [])];
 
@@ -200,8 +204,7 @@ serve(async (req) => {
       });
     }
 
-    // Store in Supabase Storage
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    // Store in Supabase Storage using service role
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
@@ -231,8 +234,10 @@ serve(async (req) => {
     const { data: publicUrlData } = supabase.storage.from("generated-images").getPublicUrl(fileName);
     const finalUrl = publicUrlData.publicUrl;
 
+    // C: Validate episode ownership before updating
     if (episodeId) {
-      const { error: updateError } = await supabase
+      // Use authenticated client (not service role) so RLS enforces ownership
+      const { error: updateError } = await supabaseAuth
         .from("episodes")
         .update({ cover_image_url: finalUrl })
         .eq("id", episodeId);

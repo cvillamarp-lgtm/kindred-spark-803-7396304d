@@ -1,5 +1,6 @@
 import { useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import hostReferencePng from "@/assets/host-reference.png";
 import { useContentExtraction } from "@/hooks/useContentExtraction";
 import {
   PIEZAS_MASTER,
