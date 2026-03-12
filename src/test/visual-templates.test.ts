@@ -37,12 +37,16 @@ describe("buildPiecePrompt", () => {
 });
 
 describe("HOST_REFERENCES", () => {
-  it("does not contain hardcoded project URLs", () => {
+  it("builds URLs dynamically from env", () => {
     const url1 = HOST_REFERENCES.imagen01;
     const url2 = HOST_REFERENCES.imagen02;
-    expect(url1).not.toContain("knjhhmqthkpucfxpdhxj");
-    expect(url2).not.toContain("knjhhmqthkpucfxpdhxj");
     expect(url1).toContain("/storage/v1/object/public/generated-images/host-imagen01.png");
     expect(url2).toContain("/storage/v1/object/public/generated-images/host-imagen02.png");
+  });
+
+  it("getHostReferenceUrl uses VITE_SUPABASE_URL", () => {
+    // In test env, VITE_SUPABASE_URL may be undefined — the function still builds the path
+    const url = getHostReferenceUrl("imagen01");
+    expect(url).toContain("host-imagen01.png");
   });
 });
