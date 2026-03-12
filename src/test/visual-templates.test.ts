@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { buildPiecePrompt, VISUAL_PIECES, HOST_REFERENCES, type EpisodeInput } from "@/lib/visual-templates";
+import { buildPiecePrompt, VISUAL_PIECES, HOST_REFERENCES, getHostReferenceUrl, type EpisodeInput } from "@/lib/visual-templates";
 
 describe("buildPiecePrompt", () => {
   const input: EpisodeInput = {
