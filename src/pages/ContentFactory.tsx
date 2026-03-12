@@ -21,58 +21,8 @@ import { CaptionEditor } from "@/components/factory/CaptionEditor";
 import { AssetGallery } from "@/components/factory/AssetGallery";
 import { ProgressTracker } from "@/components/factory/ProgressTracker";
 import { PieceSelector } from "@/components/factory/PieceSelector";
-
-type PieceCopyMap = Record<string, string[]>;
-
-interface ExtractionResult {
-  thesis: string;
-  keyPhrases: string[];
-  pieceCopy: PieceCopyMap;
-}
-
-// Convert seccionA/seccionB format from extract-content to our internal format
-function parseExtraction(data: any): ExtractionResult | null {
-  // Handle seccionA/seccionB format from edge function
-  if (data.seccionA && data.seccionB) {
-    const thesis = data.seccionA.tesisCentral || "";
-    const keyPhrases = data.seccionA.frasesClaves || [];
-    const pieceCopy: PieceCopyMap = {};
-
-    // Map seccionB pieces to VISUAL_PIECES by index
-    const secBKeys = [
-      "portada", "lanzamiento", "reel", "story_lanzamiento", "story_quote",
-      "quote_feed", "slide1", "slide2", "slide3", "slide4",
-      "slide5", "slide6", "slide7", "slide8", "highlight",
-    ];
-
-    secBKeys.forEach((key, idx) => {
-      const pieceData = data.seccionB[key];
-      if (pieceData && typeof pieceData === "object") {
-        const lines = Object.values(pieceData).filter((v): v is string => typeof v === "string" && v.length > 0);
-        if (lines.length > 0) {
-          pieceCopy[String(idx + 1)] = lines;
-        }
-      }
-    });
-
-    return { thesis, keyPhrases, pieceCopy };
-  }
-
-  // Handle direct thesis/pieceCopy format (legacy)
-  if (data.thesis && data.pieceCopy) {
-    return data as ExtractionResult;
-  }
-
-  return null;
-}
-
-interface AssetState {
-  imageUrl?: string;
-  caption: string;
-  hashtags: string;
-  status: string;
-  promptUsed?: string;
-}
+import { useContentProduction } from "@/hooks/useContentProduction";
+import type { Tables } from "@/integrations/supabase/types";
 
 export default function ContentFactory() {
   const [searchParams] = useSearchParams();
@@ -106,7 +56,28 @@ export default function ContentFactory() {
     setSelectedPieces(new Set());
   }, []);
 
-  // Auto-load from episode (single source of truth - reads from DB, not query params)
+  // Production hook
+  const {
+    extraction,
+    pieceCopy,
+    assets,
+    loading,
+    producing,
+    prodStep,
+    prodCurrent,
+    prodTotal,
+    extractContent,
+    handleImageGenerated,
+    updatePieceCopy,
+    handleCaptionChange,
+    approveAsset,
+    deleteAsset,
+    generateCaptions,
+    saveToDatabase,
+    produceAll,
+  } = useContentProduction();
+
+  // Auto-load from episode
   useEffect(() => {
     const epId = searchParams.get("episode_id");
     if (!epId) return;
@@ -121,36 +92,23 @@ export default function ContentFactory() {
         .single();
       if (error || !data) return;
 
-      setEpNumber(data.number || "");
-      setTitle(data.final_title || (data as any).working_title || data.title || "");
-      setTheme(data.theme || "");
+      const ep = data as Tables<"episodes">;
+      setEpNumber(ep.number || "");
+      setTitle(ep.final_title || ep.working_title || ep.title || "");
+      setTheme(ep.theme || "");
 
-      const scriptText = (data as any).script_base || (data as any).script_generated || "";
+      const scriptText = ep.script_base || ep.script_generated || "";
       const parts = [
-        scriptText ? scriptText : data.summary ? `Resumen: ${data.summary}` : "",
-        data.hook ? `Hook: ${data.hook}` : "",
-        data.quote ? `Quote: ${data.quote}` : "",
-        data.cta ? `CTA: ${data.cta}` : "",
+        scriptText ? scriptText : ep.summary ? `Resumen: ${ep.summary}` : "",
+        ep.hook ? `Hook: ${ep.hook}` : "",
+        ep.quote ? `Quote: ${ep.quote}` : "",
+        ep.cta ? `CTA: ${ep.cta}` : "",
       ].filter(Boolean);
       if (parts.length) setScript(parts.join("\n\n"));
     };
 
     loadEpisode();
   }, [searchParams]);
-
-  // Extraction state
-  const [loading, setLoading] = useState(false);
-  const [extraction, setExtraction] = useState<ExtractionResult | null>(null);
-  const [pieceCopy, setPieceCopy] = useState<PieceCopyMap>({});
-
-  // Assets state
-  const [assets, setAssets] = useState<Record<number, AssetState>>({});
-
-  // Production state
-  const [producing, setProducing] = useState(false);
-  const [prodStep, setProdStep] = useState("");
-  const [prodCurrent, setProdCurrent] = useState(0);
-  const [prodTotal, setProdTotal] = useState(0);
 
   // UI state
   const [tab, setTab] = useState("input");
@@ -164,430 +122,19 @@ export default function ContentFactory() {
     [epNumber, extraction]
   );
 
-  // Extract content via AI
-  const extractContent = async () => {
-    if (!script && !title && !theme) {
-      toast.error("Ingresa al menos un guión, título o tema");
-      return;
-    }
-    setLoading(true);
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.access_token) {
-        toast.error("Debes iniciar sesión");
-        return;
-      }
+  const handleExtract = () => extractContent(script, title, theme, epNumber).then((r) => {
+    if (r) setTab("pieces");
+  });
 
-      const resp = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/extract-content`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${session.access_token}`,
-          },
-          body: JSON.stringify({ script, title, theme }),
-        }
-      );
-
-      if (!resp.ok) {
-        const err = await resp.json().catch(() => ({ error: "Error desconocido" }));
-        throw new Error(err.error || `Error ${resp.status}`);
-      }
-
-      const rawData = await resp.json();
-      const parsed = parseExtraction(rawData);
-      if (parsed) {
-        setExtraction(parsed);
-        const merged: PieceCopyMap = {};
-        for (const [k, v] of Object.entries(parsed.pieceCopy)) {
-          merged[k] = v.map((line: string) =>
-            line.replace(/XX/g, epNumber.padStart(2, "0") || "XX")
-          );
-        }
-        setPieceCopy(merged);
-        setTab("pieces");
-        toast.success("Contenido extraído — revisa las 15 piezas");
-      } else {
-        throw new Error("Respuesta incompleta de IA");
-      }
-    } catch (e: any) {
-      toast.error(e.message);
-    } finally {
-      setLoading(false);
-    }
+  const handleGenerateCaptions = () => {
+    generateCaptions(title, epNumber).then(() => setTab("captions"));
   };
 
-  // Handle image generated for a piece
-  const handleImageGenerated = useCallback((pieceId: number, imageUrl: string, prompt: string) => {
-    setAssets((prev) => ({
-      ...prev,
-      [pieceId]: {
-        ...prev[pieceId],
-        imageUrl,
-        status: "generated",
-        promptUsed: prompt,
-        caption: prev[pieceId]?.caption || "",
-        hashtags: prev[pieceId]?.hashtags || "",
-      },
-    }));
-  }, []);
-
-  // Edit copy
-  const updatePieceCopy = useCallback((pieceId: number, lineIndex: number, value: string) => {
-    setPieceCopy((prev) => {
-      const piece = VISUAL_PIECES.find((p) => p.id === pieceId)!;
-      const current = [...(prev[String(pieceId)] || piece.copyTemplate)];
-      current[lineIndex] = value;
-      return { ...prev, [String(pieceId)]: current };
-    });
-  }, []);
-
-  // Caption changes
-  const handleCaptionChange = useCallback((pieceId: number, field: "caption" | "hashtags", value: string) => {
-    setAssets((prev) => ({
-      ...prev,
-      [pieceId]: {
-        ...prev[pieceId],
-        [field]: value,
-        status: prev[pieceId]?.status || "pending",
-        caption: field === "caption" ? value : (prev[pieceId]?.caption || ""),
-        hashtags: field === "hashtags" ? value : (prev[pieceId]?.hashtags || ""),
-      },
-    }));
-  }, []);
-
-  // Generate captions for all pieces
-  const generateCaptions = async () => {
-    if (!extraction) {
-      toast.error("Primero extrae el contenido del guión");
-      return;
-    }
-    setLoading(true);
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.access_token) {
-        toast.error("Debes iniciar sesión");
-        return;
-      }
-
-      const pieces = VISUAL_PIECES.map((p) => ({
-        id: p.id,
-        name: p.shortName,
-        copy: (pieceCopy[String(p.id)] || p.copyTemplate).join(" "),
-      }));
-
-      const resp = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-captions`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${session.access_token}`,
-          },
-          body: JSON.stringify({
-            pieces,
-            episodeTitle: title,
-            episodeNumber: epNumber,
-            thesis: extraction.thesis,
-          }),
-        }
-      );
-
-      if (!resp.ok) {
-        const err = await resp.json().catch(() => ({ error: "Error desconocido" }));
-        throw new Error(err.error || `Error ${resp.status}`);
-      }
-
-      const data = await resp.json();
-      if (data.captions && Array.isArray(data.captions)) {
-        setAssets((prev) => {
-          const next = { ...prev };
-          for (const c of data.captions) {
-            next[c.pieceId] = {
-              ...next[c.pieceId],
-              caption: c.caption || "",
-              hashtags: c.hashtags || "",
-              status: next[c.pieceId]?.status || "pending",
-            };
-          }
-          return next;
-        });
-        setTab("captions");
-        toast.success("Captions generados para las 15 piezas");
-      }
-    } catch (e: any) {
-      toast.error(e.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Approve / delete asset
-  const approveAsset = useCallback((pieceId: number) => {
-    setAssets((prev) => ({
-      ...prev,
-      [pieceId]: { ...prev[pieceId], status: "approved", caption: prev[pieceId]?.caption || "", hashtags: prev[pieceId]?.hashtags || "" },
-    }));
-    toast.success("Pieza aprobada");
-  }, []);
-
-  const deleteAsset = useCallback((pieceId: number) => {
-    setAssets((prev) => {
-      const next = { ...prev };
-      delete next[pieceId];
-      return next;
-    });
-    toast.success("Asset eliminado");
-  }, []);
-
-  // Save all to database using upsert
-  const saveToDatabase = async () => {
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        toast.error("Debes iniciar sesión");
-        return;
-      }
-
-      const rows = Object.entries(assets)
-        .filter(([_, a]) => a.imageUrl || a.caption)
-        .map(([pieceId, a]) => {
-          const piece = VISUAL_PIECES.find((p) => p.id === Number(pieceId))!;
-          return {
-            user_id: session.user.id,
-            piece_id: Number(pieceId),
-            piece_name: piece.shortName,
-            image_url: a.imageUrl || null,
-            caption: a.caption || null,
-            hashtags: a.hashtags || null,
-            prompt_used: a.promptUsed || null,
-            status: a.status,
-            episode_id: episodeId || null,
-          };
-        });
-
-      if (rows.length === 0) {
-        toast.error("No hay assets para guardar");
-        return;
-      }
-
-      const { error } = await supabase
-        .from("content_assets")
-        .upsert(rows as any, { onConflict: "user_id,piece_id,episode_id" });
-      if (error) throw error;
-
-      toast.success(`${rows.length} assets guardados`);
-    } catch (e: any) {
-      toast.error(e.message);
-    }
-  };
-
-  // Produce all - automated flow with piece selection + retry
-  const produceAll = async () => {
-    if (!script && !title) {
-      toast.error("Ingresa al menos un guión o título");
-      return;
-    }
-    if (selectedPieces.size === 0) {
-      toast.error("Selecciona al menos una pieza");
-      return;
-    }
-    setProducing(true);
-    const piecesToProduce = VISUAL_PIECES.filter((p) => selectedPieces.has(p.id));
-    setProdTotal(2 + piecesToProduce.length); // 1 extract + 1 captions + N images
-    setProdCurrent(0);
-
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.access_token) throw new Error("Sesión expirada");
-
-      // Step 1: Extract content
-      setProdStep("Extrayendo contenido...");
-      setProdCurrent(1);
-
-      const extractResp = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/extract-content`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${session.access_token}`,
-          },
-          body: JSON.stringify({ script, title, theme }),
-        }
-      );
-
-      if (!extractResp.ok) {
-        const err = await extractResp.json().catch(() => ({ error: "Error desconocido" }));
-        throw new Error(err.error || `Error ${extractResp.status}`);
-      }
-
-      const rawData = await extractResp.json();
-      const parsed = parseExtraction(rawData);
-      if (!parsed) throw new Error("Respuesta incompleta de IA");
-
-      setExtraction(parsed);
-      const epNum = epNumber.padStart(2, "0") || "XX";
-      const mergedCopy: PieceCopyMap = {};
-      for (const [k, v] of Object.entries(parsed.pieceCopy)) {
-        mergedCopy[k] = v.map((line: string) => line.replace(/XX/g, epNum));
-      }
-      setPieceCopy(mergedCopy);
-
-      const localEpisodeInput: EpisodeInput = {
-        number: epNumber || "XX",
-        thesis: parsed.thesis,
-        keyPhrases: parsed.keyPhrases,
-      };
-
-      // Step 2: Generate captions
-      setProdStep("Generando captions...");
-      setProdCurrent(2);
-
-      try {
-        const pieces = VISUAL_PIECES.map((p) => ({
-          id: p.id,
-          name: p.shortName,
-          copy: (mergedCopy[String(p.id)] || p.copyTemplate).join(" "),
-        }));
-
-        const captionResp = await fetch(
-          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-captions`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${session.access_token}`,
-            },
-            body: JSON.stringify({
-              pieces,
-              episodeTitle: title,
-              episodeNumber: epNumber,
-              thesis: parsed.thesis,
-            }),
-          }
-        );
-
-        if (captionResp.ok) {
-          const captionData = await captionResp.json();
-          if (captionData.captions && Array.isArray(captionData.captions)) {
-            setAssets((prev) => {
-              const next = { ...prev };
-              for (const c of captionData.captions) {
-                next[c.pieceId] = {
-                  ...next[c.pieceId],
-                  caption: c.caption || "",
-                  hashtags: c.hashtags || "",
-                  status: next[c.pieceId]?.status || "pending",
-                };
-              }
-              return next;
-            });
-          }
-        }
-      } catch (e) {
-        console.error("Caption generation error:", e);
-      }
-
-      // Step 3: Generate images with retry queue
-      const failedPieces: typeof piecesToProduce = [];
-
-      for (let i = 0; i < piecesToProduce.length; i++) {
-        const piece = piecesToProduce[i];
-        setProdStep(`Generando imagen ${i + 1}/${piecesToProduce.length}: ${piece.shortName}`);
-        setProdCurrent(3 + i);
-
-        const copy = mergedCopy[String(piece.id)] || piece.copyTemplate;
-        const prompt = buildPiecePrompt(piece, localEpisodeInput, copy);
-
-        try {
-          const resp = await fetch(
-            `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-image`,
-            {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${session.access_token}`,
-              },
-              body: JSON.stringify({ prompt, hostReference: piece.hostReference }),
-            }
-          );
-
-          if (resp.ok) {
-            const data = await resp.json();
-            if (data.imageUrl) {
-              handleImageGenerated(piece.id, data.imageUrl, prompt);
-            } else {
-              failedPieces.push(piece);
-            }
-          } else {
-            failedPieces.push(piece);
-          }
-        } catch {
-          failedPieces.push(piece);
-        }
-
-        if (i < piecesToProduce.length - 1) {
-          await new Promise((r) => setTimeout(r, 2000));
-        }
-      }
-
-      // Step 4: Retry failed pieces (up to 2 retries each)
-      if (failedPieces.length > 0) {
-        setProdStep(`Reintentando ${failedPieces.length} piezas fallidas...`);
-        for (let retry = 0; retry < 2; retry++) {
-          const stillFailing: typeof piecesToProduce = [];
-          for (const piece of failedPieces) {
-            const copy = mergedCopy[String(piece.id)] || piece.copyTemplate;
-            const prompt = buildPiecePrompt(piece, localEpisodeInput, copy);
-            try {
-              await new Promise((r) => setTimeout(r, 3000));
-              const resp = await fetch(
-                `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-image`,
-                {
-                  method: "POST",
-                  headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${session.access_token}`,
-                  },
-                  body: JSON.stringify({ prompt, hostReference: piece.hostReference }),
-                }
-              );
-              if (resp.ok) {
-                const data = await resp.json();
-                if (data.imageUrl) {
-                  handleImageGenerated(piece.id, data.imageUrl, prompt);
-                  continue;
-                }
-              }
-              stillFailing.push(piece);
-            } catch {
-              stillFailing.push(piece);
-            }
-          }
-          if (stillFailing.length === 0) break;
-          failedPieces.length = 0;
-          failedPieces.push(...stillFailing);
-        }
-        if (failedPieces.length > 0) {
-          toast.error(`${failedPieces.length} piezas no pudieron generarse: ${failedPieces.map(p => p.shortName).join(", ")}`);
-        }
-      }
-
-      // Save all
-      setProdStep("Guardando assets...");
-      setProdCurrent(2 + piecesToProduce.length);
-      await new Promise((r) => setTimeout(r, 500));
-      await saveToDatabase();
-
-      setTab("library");
-      toast.success("Producción completa");
-    } catch (e: any) {
-      toast.error(e.message);
-    } finally {
-      setProducing(false);
-    }
+  const handleProduceAll = async () => {
+    await produceAll(script, title, theme, epNumber, episodeId, selectedPieces);
+    await saveToDatabase(episodeId);
+    setTab("library");
+    toast.success("Producción completa");
   };
 
   const generatedCount = Object.values(assets).filter((a) => a.imageUrl).length;
@@ -609,7 +156,7 @@ export default function ContentFactory() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={saveToDatabase}
+                onClick={() => saveToDatabase(episodeId)}
                 disabled={producing}
               >
                 <Download className="h-3.5 w-3.5 mr-1.5" />
@@ -617,7 +164,7 @@ export default function ContentFactory() {
               </Button>
               <Button
                 size="sm"
-                onClick={produceAll}
+                onClick={handleProduceAll}
                 disabled={producing || loading}
               >
                 <Zap className="h-3.5 w-3.5 mr-1.5" />
@@ -718,7 +265,7 @@ export default function ContentFactory() {
                 />
                 <div className="flex gap-2">
                   <Button
-                    onClick={extractContent}
+                    onClick={handleExtract}
                     disabled={loading || producing}
                     className="flex-1"
                   >
@@ -739,7 +286,6 @@ export default function ContentFactory() {
         <TabsContent value="pieces">
           {extraction && (
             <div className="space-y-4">
-              {/* Thesis */}
               <Card>
                 <CardContent className="pt-4">
                   <div className="flex flex-wrap gap-4">
@@ -759,7 +305,6 @@ export default function ContentFactory() {
                 </CardContent>
               </Card>
 
-              {/* Pieces grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {VISUAL_PIECES.map((piece) => (
                   <PieceCard
@@ -790,7 +335,7 @@ export default function ContentFactory() {
                 </p>
                 <Button
                   size="sm"
-                  onClick={generateCaptions}
+                  onClick={handleGenerateCaptions}
                   disabled={loading || producing}
                 >
                   {loading ? (

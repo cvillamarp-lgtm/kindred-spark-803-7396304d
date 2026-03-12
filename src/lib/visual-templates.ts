@@ -14,9 +14,15 @@ export interface VisualPiece {
   backgroundVersion?: "cobalt" | "negro" | "both";
 }
 
+/** Build host reference URL dynamically from env */
+export function getHostReferenceUrl(key: "imagen01" | "imagen02"): string {
+  const baseUrl = import.meta.env.VITE_SUPABASE_URL;
+  return `${baseUrl}/storage/v1/object/public/generated-images/host-${key}.png`;
+}
+
 export const HOST_REFERENCES = {
-  imagen01: "https://knjhhmqthkpucfxpdhxj.supabase.co/storage/v1/object/public/generated-images/host-imagen01.png",
-  imagen02: "https://knjhhmqthkpucfxpdhxj.supabase.co/storage/v1/object/public/generated-images/host-imagen02.png",
+  get imagen01() { return getHostReferenceUrl("imagen01"); },
+  get imagen02() { return getHostReferenceUrl("imagen02"); },
 };
 
 export const BRAND_CONTEXT = {

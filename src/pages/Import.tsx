@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Textarea } from "@/components/ui/textarea";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import {
   Upload, FileText, ChevronDown, ChevronRight, CheckCircle2,
@@ -14,6 +15,7 @@ import { parseDocument, computeStats, DESTINATION_LABELS, CONTENT_TYPE_LABELS, p
 import type { ParsedBlock, ImportStats, ParsedEpisode } from "@/lib/document-parser";
 import { executeImport, importEpisodes } from "@/lib/import-engine";
 import type { ImportSummary, ImportResult } from "@/lib/import-engine";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 type Step = "load" | "preview" | "importing" | "results";
@@ -44,29 +46,88 @@ export default function ImportPage() {
   const [episodeResults, setEpisodeResults] = useState<ImportResult[]>([]);
   const [expandedBlocks, setExpandedBlocks] = useState<Set<string>>(new Set());
   const [isLoading, setIsLoading] = useState(false);
+  const [pasteMode, setPasteMode] = useState(false);
+  const [pasteContent, setPasteContent] = useState("");
 
-  const loadDocument = useCallback(async () => {
+  // Load from private_documents table (authenticated)
+  const loadFromDatabase = useCallback(async () => {
     setIsLoading(true);
     try {
-      const response = await fetch("/data/master-document.md");
-      if (!response.ok) throw new Error("No se pudo cargar el documento");
-      const text = await response.text();
+      const { data, error } = await supabase
+        .from("private_documents")
+        .select("content")
+        .eq("name", "master-document")
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .single();
 
-      const parsed = parseDocument(text);
-      const st = computeStats(parsed);
-      const eps = parseRenumberedEpisodes(text);
+      if (error || !data?.content) {
+        toast.error("No se encontró el documento maestro. Sube uno primero.");
+        setPasteMode(true);
+        setIsLoading(false);
+        return;
+      }
 
-      setBlocks(parsed);
-      setStats(st);
-      setEpisodes(eps);
-      setStep("preview");
-      toast.success(`${parsed.length} bloques detectados, ${eps.length} episodios encontrados`);
+      processDocument(data.content);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Error al cargar");
     } finally {
       setIsLoading(false);
     }
   }, []);
+
+  // Upload document to private_documents table
+  const uploadDocument = useCallback(async (text: string) => {
+    if (!text || text.length < 100) {
+      toast.error("El contenido es demasiado corto");
+      return;
+    }
+    setIsLoading(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast.error("Debes iniciar sesión");
+        return;
+      }
+
+      // Upsert: delete old and insert new
+      await supabase
+        .from("private_documents")
+        .delete()
+        .eq("name", "master-document")
+        .eq("user_id", session.user.id);
+
+      const { error } = await supabase
+        .from("private_documents")
+        .insert({
+          user_id: session.user.id,
+          name: "master-document",
+          content: text,
+        });
+
+      if (error) throw error;
+
+      processDocument(text);
+      toast.success("Documento guardado y analizado");
+      setPasteMode(false);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Error al guardar");
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  const processDocument = (text: string) => {
+    const parsed = parseDocument(text);
+    const st = computeStats(parsed);
+    const eps = parseRenumberedEpisodes(text);
+
+    setBlocks(parsed);
+    setStats(st);
+    setEpisodes(eps);
+    setStep("preview");
+    toast.success(`${parsed.length} bloques detectados, ${eps.length} episodios encontrados`);
+  };
 
   const filteredBlocks = useMemo(() => {
     if (!filterDest) return blocks;
@@ -88,13 +149,11 @@ export default function ImportPage() {
     setProgressTotal(blocks.length + episodes.length);
 
     try {
-      // Import blocks
       const blockSummary = await executeImport(blocks, (current, total) => {
         setProgress(current);
         setProgressTotal(total + episodes.length);
       });
 
-      // Import episodes
       const epResults = await importEpisodes(episodes);
       setProgress(blocks.length + episodes.length);
 
@@ -146,7 +205,7 @@ export default function ImportPage() {
       {/* Step 1: Load */}
       {step === "load" && (
         <Card className="flex-1 flex items-center justify-center">
-          <CardContent className="text-center py-16 space-y-4">
+          <CardContent className="text-center py-16 space-y-4 w-full max-w-lg">
             <div className="h-16 w-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto">
               <Upload className="h-8 w-8 text-primary" />
             </div>
@@ -159,19 +218,48 @@ export default function ImportPage() {
                 El sistema analizará cada sección, clasificará el contenido por tipo y propondrá el destino correcto en la app.
               </p>
             </div>
-            <Button onClick={loadDocument} disabled={isLoading} size="lg">
-              {isLoading ? (
-                <>
-                  <div className="h-4 w-4 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin mr-2" />
-                  Analizando...
-                </>
-              ) : (
-                <>
-                  <Sparkles className="h-4 w-4 mr-2" />
-                  Analizar documento
-                </>
-              )}
-            </Button>
+
+            {pasteMode ? (
+              <div className="space-y-3 text-left">
+                <Textarea
+                  placeholder="Pega aquí el contenido del documento maestro..."
+                  value={pasteContent}
+                  onChange={(e) => setPasteContent(e.target.value)}
+                  className="min-h-48 font-mono text-xs resize-none"
+                />
+                <div className="flex gap-2 justify-end">
+                  <Button variant="outline" onClick={() => setPasteMode(false)}>
+                    Cancelar
+                  </Button>
+                  <Button
+                    onClick={() => uploadDocument(pasteContent)}
+                    disabled={isLoading || pasteContent.length < 100}
+                  >
+                    {isLoading ? "Guardando..." : "Guardar y analizar"}
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-2 items-center">
+                <Button onClick={loadFromDatabase} disabled={isLoading} size="lg">
+                  {isLoading ? (
+                    <>
+                      <div className="h-4 w-4 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin mr-2" />
+                      Cargando...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="h-4 w-4 mr-2" />
+                      Cargar documento guardado
+                    </>
+                  )}
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => setPasteMode(true)}>
+                  <Upload className="h-3.5 w-3.5 mr-1.5" />
+                  Subir documento nuevo
+                </Button>
+              </div>
+            )}
           </CardContent>
         </Card>
       )}
@@ -179,7 +267,6 @@ export default function ImportPage() {
       {/* Step 2: Preview */}
       {step === "preview" && stats && (
         <div className="flex-1 flex flex-col gap-4 overflow-hidden">
-          {/* Stats bar */}
           <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-3">
             <Card className="p-3">
               <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Total bloques</p>
@@ -199,7 +286,6 @@ export default function ImportPage() {
             ))}
           </div>
 
-          {/* Filter bar */}
           <div className="flex items-center gap-2 flex-wrap">
             <Filter className="h-3.5 w-3.5 text-muted-foreground" />
             <Button
@@ -227,7 +313,6 @@ export default function ImportPage() {
             })}
           </div>
 
-          {/* Blocks list */}
           <ScrollArea className="flex-1">
             <div className="space-y-1.5 pr-3">
               {filteredBlocks.map((block) => (
@@ -295,7 +380,6 @@ export default function ImportPage() {
             </div>
           </ScrollArea>
 
-          {/* Confirm bar */}
           <div className="flex items-center justify-between border-t border-border pt-4">
             <div className="text-sm text-muted-foreground">
               {filteredBlocks.length} bloques + {episodes.length} episodios listos para importar
@@ -331,7 +415,6 @@ export default function ImportPage() {
       {/* Step 4: Results */}
       {step === "results" && summary && (
         <div className="flex-1 flex flex-col gap-4 overflow-hidden">
-          {/* Summary cards */}
           <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
             <Card className="p-3">
               <p className="text-[10px] text-muted-foreground uppercase">Total</p>
@@ -357,7 +440,6 @@ export default function ImportPage() {
             </Card>
           </div>
 
-          {/* Results log */}
           <ScrollArea className="flex-1">
             <div className="space-y-1 pr-3">
               {summary.results.map((result, i) => (
@@ -381,7 +463,6 @@ export default function ImportPage() {
             </div>
           </ScrollArea>
 
-          {/* Episode results section */}
           {episodeResults.length > 0 && (
             <Card>
               <CardHeader className="pb-2">
@@ -410,7 +491,6 @@ export default function ImportPage() {
             </Card>
           )}
 
-          {/* Actions */}
           <div className="flex items-center justify-between border-t border-border pt-4">
             <p className="text-xs text-muted-foreground">
               Trazabilidad completa guardada en knowledge_blocks

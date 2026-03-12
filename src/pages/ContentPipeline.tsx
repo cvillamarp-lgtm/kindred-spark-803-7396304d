@@ -1,5 +1,6 @@
 import { useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import hostReferencePng from "@/assets/host-reference.png";
 import { useContentExtraction } from "@/hooks/useContentExtraction";
 import {
   PIEZAS_MASTER,
@@ -49,12 +50,7 @@ function ScriptGeneratorMini({ onScriptGenerated }: { onScriptGenerated: (s: str
     setIsGenerating(true);
     setPreview("");
     try {
-      const res = await supabase.functions.invoke("generate-script", {
-        body: { theme, format },
-      });
-      if (res.error) throw new Error(res.error.message);
-
-      // SSE stream not available via invoke — use fetch directly
+      // F: Single invocation — use fetch directly for SSE streaming
       const session = await supabase.auth.getSession();
       const token = session.data.session?.access_token;
       const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-script`;
@@ -173,7 +169,7 @@ export default function ContentPipeline() {
   const loadHostBase64 = async (): Promise<string | null> => {
     if (hostBase64Ref.current) return hostBase64Ref.current;
     try {
-      const res = await fetch("/src/assets/host-reference.png");
+      const res = await fetch(hostReferencePng);
       const blob = await res.blob();
       return new Promise((resolve) => {
         const reader = new FileReader();

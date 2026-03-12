@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import type { Tables, TablesUpdate } from "@/integrations/supabase/types";
 
 /**
  * Hook to fetch a single episode by ID with all its related data.
@@ -55,11 +56,11 @@ export function useEpisode(id: string | undefined) {
   });
 
   const updateEpisode = useMutation({
-    mutationFn: async (updates: Record<string, any>) => {
+    mutationFn: async (updates: TablesUpdate<"episodes">) => {
       if (!id) throw new Error("No episode ID");
       const { error } = await supabase
         .from("episodes")
-        .update(updates as any)
+        .update(updates)
         .eq("id", id);
       if (error) throw error;
     },
