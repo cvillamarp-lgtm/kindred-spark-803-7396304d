@@ -77,6 +77,7 @@ const App = () => (
                         <Route path="/tasks" element={<Tasks />} />
                         <Route path="/system" element={<SystemPage />} />
                         <Route path="/resources" element={<Resources />} />
+                        <Route path="/import" element={<ImportPage />} />
                         
                         {/* Archived routes (accessible but not in nav) */}
                         <Route path="/audience" element={<Audience />} />

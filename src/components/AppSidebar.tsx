@@ -39,6 +39,7 @@ const systemNav: NavItem[] = [
   { label: "Tareas", url: "/tasks", icon: ListTodo, badgeKey: "pendingTasks" },
   { label: "Sistema", url: "/system", icon: Settings },
   { label: "Recursos", url: "/resources", icon: FileText },
+  { label: "Importar", url: "/import", icon: Upload },
 ];
 
 function NavGroup({ label, items, collapsed, counts }: { label: string; items: NavItem[]; collapsed: boolean; counts?: Record<string, number> }) {
