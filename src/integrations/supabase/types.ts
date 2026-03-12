@@ -210,6 +210,7 @@ export type Database = {
           checklist_assets_json: Json | null
           checklist_qa_json: Json | null
           conflicto: boolean | null
+          conflicto_central: string | null
           conflicto_detectado: boolean | null
           conflicto_nota: string | null
           core_thesis: string | null
@@ -226,9 +227,12 @@ export type Database = {
           estado_validacion: string | null
           fecha_es_estimada: boolean | null
           final_title: string | null
+          generation_metadata: Json | null
           health_score: number | null
           hook: string | null
           id: string
+          idea_principal: string | null
+          intencion_del_episodio: string | null
           link_spotify: string | null
           nivel_completitud: string | null
           nota_trazabilidad: string | null
@@ -240,6 +244,7 @@ export type Database = {
           ready_for_publish: boolean | null
           recording_status: string | null
           release_date: string | null
+          restricciones: string | null
           retencion_q1: number | null
           retencion_q2: number | null
           retencion_q3: number | null
@@ -255,6 +260,7 @@ export type Database = {
           theme: string | null
           title: string
           titulo_original: string | null
+          tono: string | null
           updated_at: string
           user_id: string | null
           visual_preset_id: string | null
@@ -264,6 +270,7 @@ export type Database = {
           checklist_assets_json?: Json | null
           checklist_qa_json?: Json | null
           conflicto?: boolean | null
+          conflicto_central?: string | null
           conflicto_detectado?: boolean | null
           conflicto_nota?: string | null
           core_thesis?: string | null
@@ -280,9 +287,12 @@ export type Database = {
           estado_validacion?: string | null
           fecha_es_estimada?: boolean | null
           final_title?: string | null
+          generation_metadata?: Json | null
           health_score?: number | null
           hook?: string | null
           id?: string
+          idea_principal?: string | null
+          intencion_del_episodio?: string | null
           link_spotify?: string | null
           nivel_completitud?: string | null
           nota_trazabilidad?: string | null
@@ -294,6 +304,7 @@ export type Database = {
           ready_for_publish?: boolean | null
           recording_status?: string | null
           release_date?: string | null
+          restricciones?: string | null
           retencion_q1?: number | null
           retencion_q2?: number | null
           retencion_q3?: number | null
@@ -309,6 +320,7 @@ export type Database = {
           theme?: string | null
           title: string
           titulo_original?: string | null
+          tono?: string | null
           updated_at?: string
           user_id?: string | null
           visual_preset_id?: string | null
@@ -318,6 +330,7 @@ export type Database = {
           checklist_assets_json?: Json | null
           checklist_qa_json?: Json | null
           conflicto?: boolean | null
+          conflicto_central?: string | null
           conflicto_detectado?: boolean | null
           conflicto_nota?: string | null
           core_thesis?: string | null
@@ -334,9 +347,12 @@ export type Database = {
           estado_validacion?: string | null
           fecha_es_estimada?: boolean | null
           final_title?: string | null
+          generation_metadata?: Json | null
           health_score?: number | null
           hook?: string | null
           id?: string
+          idea_principal?: string | null
+          intencion_del_episodio?: string | null
           link_spotify?: string | null
           nivel_completitud?: string | null
           nota_trazabilidad?: string | null
@@ -348,6 +364,7 @@ export type Database = {
           ready_for_publish?: boolean | null
           recording_status?: string | null
           release_date?: string | null
+          restricciones?: string | null
           retencion_q1?: number | null
           retencion_q2?: number | null
           retencion_q3?: number | null
@@ -363,6 +380,7 @@ export type Database = {
           theme?: string | null
           title?: string
           titulo_original?: string | null
+          tono?: string | null
           updated_at?: string
           user_id?: string | null
           visual_preset_id?: string | null
