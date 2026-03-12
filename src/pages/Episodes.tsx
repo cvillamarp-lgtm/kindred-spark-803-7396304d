@@ -15,6 +15,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useEpisodes } from "@/hooks/useEpisode";
 import { auditEpisode, getCompletenessLevel } from "@/lib/episode-validation";
+import { initBlockStatesFromAI } from "@/lib/block-states";
 
 export default function Episodes() {
   const [open, setOpen] = useState(false);
