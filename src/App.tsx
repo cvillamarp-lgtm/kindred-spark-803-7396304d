@@ -23,6 +23,7 @@ const MetricsPage = lazy(() => import("./pages/Metrics"));
 const Tasks = lazy(() => import("./pages/Tasks"));
 const SystemPage = lazy(() => import("./pages/System"));
 const Resources = lazy(() => import("./pages/Resources"));
+const ImportPage = lazy(() => import("./pages/Import"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 // Archived routes (still accessible but not in main nav)
