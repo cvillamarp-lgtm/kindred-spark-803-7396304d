@@ -5,10 +5,12 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
-import { Image, Download, CheckCircle2, Trash2, Search, Filter, Copy, Check } from "lucide-react";
+import { Image, Download, CheckCircle2, Trash2, Search, Filter, Copy, Check, FileArchive } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { AssetPreviewModal } from "@/components/library/AssetPreviewModal";
+import { useQuery } from "@tanstack/react-query";
+import JSZip from "jszip";
 
 interface ContentAsset {
   id: string;
@@ -26,9 +28,19 @@ export default function Library() {
   const [assets, setAssets] = useState<ContentAsset[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("all");
+  const [episodeFilter, setEpisodeFilter] = useState("all");
   const [search, setSearch] = useState("");
   const [previewAsset, setPreviewAsset] = useState<ContentAsset | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [exporting, setExporting] = useState(false);
+
+  const { data: episodes = [] } = useQuery({
+    queryKey: ["library-episodes"],
+    queryFn: async () => {
+      const { data } = await supabase.from("episodes").select("id, title, number").order("created_at", { ascending: false });
+      return (data || []) as { id: string; title: string; number: string | null }[];
+    },
+  });
 
   const fetchAssets = async () => {
     setLoading(true);
@@ -81,8 +93,43 @@ export default function Library() {
     setTimeout(() => setCopiedId(null), 2000);
   };
 
+  const exportFilteredZip = async () => {
+    const withImages = filtered.filter((a) => a.image_url);
+    if (withImages.length === 0) return toast.error("No hay imágenes para exportar");
+
+    setExporting(true);
+    toast.info("Preparando ZIP...");
+    const zip = new JSZip();
+
+    for (const asset of withImages) {
+      try {
+        const res = await fetch(asset.image_url!);
+        const blob = await res.blob();
+        const ext = asset.image_url!.includes(".png") ? "png" : "jpg";
+        zip.file(`${asset.piece_name.replace(/[^a-zA-Z0-9]/g, "_")}.${ext}`, blob);
+      } catch { /* skip */ }
+    }
+
+    const captionsText = filtered
+      .filter((a) => a.caption || a.hashtags)
+      .map((a) => `--- ${a.piece_name} ---\n${a.caption || ""}\n\n${a.hashtags || ""}`)
+      .join("\n\n\n");
+    if (captionsText) zip.file("captions.txt", captionsText);
+
+    const content = await zip.generateAsync({ type: "blob" });
+    const url = URL.createObjectURL(content);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `AMTME_assets_${new Date().toISOString().slice(0, 10)}.zip`;
+    a.click();
+    URL.revokeObjectURL(url);
+    setExporting(false);
+    toast.success("ZIP descargado");
+  };
+
   const filtered = assets.filter((a) => {
     if (filter !== "all" && a.status !== filter) return false;
+    if (episodeFilter !== "all" && a.episode_id !== episodeFilter) return false;
     if (search && !a.piece_name.toLowerCase().includes(search.toLowerCase())) return false;
     return true;
   });
@@ -99,11 +146,15 @@ export default function Library() {
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <h1 className="page-title">Biblioteca de Assets</h1>
-          <p className="page-subtitle">
-            Todos tus assets generados en un solo lugar
-          </p>
+          <p className="page-subtitle">Todos tus assets generados en un solo lugar</p>
         </div>
-        <Badge variant="secondary">{assets.length} assets</Badge>
+        <div className="flex items-center gap-2">
+          <Badge variant="secondary">{assets.length} assets</Badge>
+          <Button variant="outline" size="sm" onClick={exportFilteredZip} disabled={exporting || filtered.length === 0}>
+            <FileArchive className="h-3.5 w-3.5 mr-1.5" />
+            Exportar ZIP
+          </Button>
+        </div>
       </div>
 
       {/* Filters */}
@@ -130,6 +181,19 @@ export default function Library() {
             <SelectItem value="published">Publicados</SelectItem>
           </SelectContent>
         </Select>
+        <Select value={episodeFilter} onValueChange={setEpisodeFilter}>
+          <SelectTrigger className="w-[200px]">
+            <SelectValue placeholder="Episodio" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todos los episodios</SelectItem>
+            {episodes.map((ep) => (
+              <SelectItem key={ep.id} value={ep.id}>
+                {ep.number ? `#${ep.number} — ` : ""}{ep.title}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       {/* Grid */}
@@ -149,12 +213,7 @@ export default function Library() {
               <div className="rounded-t-lg overflow-hidden border-b border-border">
                 <AspectRatio ratio={1}>
                   {asset.image_url ? (
-                    <img
-                      src={asset.image_url}
-                      alt={asset.piece_name}
-                      className="w-full h-full object-cover"
-                      loading="lazy"
-                    />
+                    <img src={asset.image_url} alt={asset.piece_name} className="w-full h-full object-cover" loading="lazy" />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center bg-secondary/30">
                       <Image className="h-8 w-8 text-muted-foreground/30" />
@@ -174,23 +233,13 @@ export default function Library() {
                 )}
                 <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
                   {asset.status === "generated" && (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="h-7 text-[10px] flex-1"
-                      onClick={() => updateStatus(asset.id, "approved")}
-                    >
+                    <Button size="sm" variant="outline" className="h-7 text-[10px] flex-1" onClick={() => updateStatus(asset.id, "approved")}>
                       <CheckCircle2 className="h-3 w-3 mr-1" />
                       Aprobar
                     </Button>
                   )}
                   {asset.status === "approved" && (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="h-7 text-[10px] flex-1"
-                      onClick={() => updateStatus(asset.id, "published")}
-                    >
+                    <Button size="sm" variant="outline" className="h-7 text-[10px] flex-1" onClick={() => updateStatus(asset.id, "published")}>
                       Publicar
                     </Button>
                   )}
@@ -206,12 +255,7 @@ export default function Library() {
                       </a>
                     </Button>
                   )}
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="h-7 w-7 p-0 text-destructive"
-                    onClick={() => deleteAsset(asset.id)}
-                  >
+                  <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-destructive" onClick={() => deleteAsset(asset.id)}>
                     <Trash2 className="h-3 w-3" />
                   </Button>
                 </div>
@@ -221,7 +265,6 @@ export default function Library() {
         </div>
       )}
 
-      {/* Preview Modal */}
       <AssetPreviewModal
         open={!!previewAsset}
         onOpenChange={(open) => !open && setPreviewAsset(null)}

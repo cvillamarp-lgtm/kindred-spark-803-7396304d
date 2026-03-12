@@ -237,7 +237,12 @@ export default function Episodes() {
                           </span>
                         )}
                         <div className="flex flex-col">
-                          <span className="font-medium text-foreground">{ep.title}</span>
+                          <span
+                            className="font-medium text-foreground hover:text-primary cursor-pointer transition-colors"
+                            onClick={() => navigate(`/episodes/${ep.id}`)}
+                          >
+                            {ep.title}
+                          </span>
                           {ep.number && <span className="text-xs text-muted-foreground mt-0.5">#{ep.number}</span>}
                         </div>
                       </div>
