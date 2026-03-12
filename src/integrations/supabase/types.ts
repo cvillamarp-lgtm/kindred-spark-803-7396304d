@@ -465,6 +465,69 @@ export type Database = {
         }
         Relationships: []
       }
+      knowledge_blocks: {
+        Row: {
+          content: string | null
+          content_type: string
+          created_at: string
+          destination_module: string
+          id: string
+          import_status: string
+          imported_at: string | null
+          last_synced_at: string | null
+          source_document: string
+          source_hash: string | null
+          source_section: string | null
+          source_subsection: string | null
+          structured_data: Json | null
+          target_record_id: string | null
+          target_table: string | null
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          content?: string | null
+          content_type: string
+          created_at?: string
+          destination_module: string
+          id?: string
+          import_status?: string
+          imported_at?: string | null
+          last_synced_at?: string | null
+          source_document?: string
+          source_hash?: string | null
+          source_section?: string | null
+          source_subsection?: string | null
+          structured_data?: Json | null
+          target_record_id?: string | null
+          target_table?: string | null
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          content?: string | null
+          content_type?: string
+          created_at?: string
+          destination_module?: string
+          id?: string
+          import_status?: string
+          imported_at?: string | null
+          last_synced_at?: string | null
+          source_document?: string
+          source_hash?: string | null
+          source_section?: string | null
+          source_subsection?: string | null
+          structured_data?: Json | null
+          target_record_id?: string | null
+          target_table?: string | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       mentions: {
         Row: {
           context: string | null

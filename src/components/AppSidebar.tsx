@@ -1,4 +1,4 @@
-import { Home, Mic, Factory, FileStack, BarChart3, Settings, ListTodo, FileText, LogOut, FolderOpen } from "lucide-react";
+import { Home, Mic, Factory, FileStack, BarChart3, Settings, ListTodo, FileText, LogOut, FolderOpen, Upload } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
@@ -39,6 +39,7 @@ const systemNav: NavItem[] = [
   { label: "Tareas", url: "/tasks", icon: ListTodo, badgeKey: "pendingTasks" },
   { label: "Sistema", url: "/system", icon: Settings },
   { label: "Recursos", url: "/resources", icon: FileText },
+  { label: "Importar", url: "/import", icon: Upload },
 ];
 
 function NavGroup({ label, items, collapsed, counts }: { label: string; items: NavItem[]; collapsed: boolean; counts?: Record<string, number> }) {
