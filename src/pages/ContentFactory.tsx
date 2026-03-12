@@ -106,29 +106,36 @@ export default function ContentFactory() {
     setSelectedPieces(new Set());
   }, []);
 
-  // Pre-fill from URL params (including episode_id)
+  // Auto-load from episode (single source of truth - reads from DB, not query params)
   useEffect(() => {
-    const num = searchParams.get("number");
-    const t = searchParams.get("title");
-    const th = searchParams.get("theme");
-    const sc = searchParams.get("script");
-    const hook = searchParams.get("hook");
-    const quote = searchParams.get("quote");
-    const cta = searchParams.get("cta");
     const epId = searchParams.get("episode_id");
+    if (!epId) return;
 
-    if (num) setEpNumber(num);
-    if (t) setTitle(t);
-    if (th) setTheme(th);
-    if (epId) setEpisodeId(epId);
+    setEpisodeId(epId);
 
-    const parts = [
-      sc ? `Resumen: ${sc}` : "",
-      hook ? `Hook: ${hook}` : "",
-      quote ? `Quote: ${quote}` : "",
-      cta ? `CTA: ${cta}` : "",
-    ].filter(Boolean);
-    if (parts.length) setScript(parts.join("\n\n"));
+    const loadEpisode = async () => {
+      const { data, error } = await supabase
+        .from("episodes")
+        .select("*")
+        .eq("id", epId)
+        .single();
+      if (error || !data) return;
+
+      setEpNumber(data.number || "");
+      setTitle(data.final_title || (data as any).working_title || data.title || "");
+      setTheme(data.theme || "");
+
+      const scriptText = (data as any).script_base || (data as any).script_generated || "";
+      const parts = [
+        scriptText ? scriptText : data.summary ? `Resumen: ${data.summary}` : "",
+        data.hook ? `Hook: ${data.hook}` : "",
+        data.quote ? `Quote: ${data.quote}` : "",
+        data.cta ? `CTA: ${data.cta}` : "",
+      ].filter(Boolean);
+      if (parts.length) setScript(parts.join("\n\n"));
+    };
+
+    loadEpisode();
   }, [searchParams]);
 
   // Extraction state
