@@ -112,6 +112,7 @@ export default function Episodes() {
             descripcion_spotify: fields.descripcion_spotify || null,
             title: fields.working_title || ideaPrincipal.slice(0, 100),
             generation_metadata: metadata,
+            block_states: initBlockStatesFromAI(),
           };
 
           const { error: updateError } = await supabase
