@@ -169,7 +169,7 @@ export default function ContentPipeline() {
   const loadHostBase64 = async (): Promise<string | null> => {
     if (hostBase64Ref.current) return hostBase64Ref.current;
     try {
-      const res = await fetch("/src/assets/host-reference.png");
+      const res = await fetch(hostReferencePng);
       const blob = await res.blob();
       return new Promise((resolve) => {
         const reader = new FileReader();
