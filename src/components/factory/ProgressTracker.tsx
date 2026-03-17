@@ -1,5 +1,6 @@
+import { forwardRef } from "react";
 import { Progress } from "@/components/ui/progress";
-import { Loader2, CheckCircle2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 
 interface ProgressTrackerProps {
   currentStep: string;
@@ -8,7 +9,8 @@ interface ProgressTrackerProps {
   isRunning: boolean;
 }
 
-export function ProgressTracker({ currentStep, currentPiece, totalPieces, isRunning }: ProgressTrackerProps) {
+export const ProgressTracker = forwardRef<HTMLDivElement, ProgressTrackerProps>(
+  function ProgressTracker({ currentStep, currentPiece, totalPieces, isRunning }, ref) {
   if (!isRunning) return null;
 
   const progress = totalPieces > 0 ? Math.round((currentPiece / totalPieces) * 100) : 0;
@@ -28,4 +30,5 @@ export function ProgressTracker({ currentStep, currentPiece, totalPieces, isRunn
       </div>
     </div>
   );
-}
+});
+
