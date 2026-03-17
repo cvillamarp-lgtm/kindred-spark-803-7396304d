@@ -40,7 +40,10 @@ export function AssetPreviewModal({ open, onOpenChange, asset }: AssetPreviewMod
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl p-0 overflow-hidden">
+      <DialogContent className="max-w-2xl p-0 overflow-hidden" aria-describedby={undefined}>
+        <VisuallyHidden.Root>
+          <DialogTitle>{asset.piece_name}</DialogTitle>
+        </VisuallyHidden.Root>
         <div className="relative">
           {asset.image_url && (
             <img

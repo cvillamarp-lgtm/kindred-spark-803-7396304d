@@ -30,4 +30,5 @@ export const ProgressTracker = forwardRef<HTMLDivElement, ProgressTrackerProps>(
       </div>
     </div>
   );
-}
+});
+
