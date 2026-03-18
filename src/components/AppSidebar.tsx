@@ -1,4 +1,4 @@
-import { Home, Mic, Factory, FileStack, BarChart3, Settings, ListTodo, FileText, LogOut, FolderOpen, Upload } from "lucide-react";
+import { Home, Mic, Factory, FileStack, BarChart3, Settings, ListTodo, FileText, LogOut, FolderOpen, Upload, Palette, PenTool, Sparkles, GitBranch, Wand2, Image, Eye } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
