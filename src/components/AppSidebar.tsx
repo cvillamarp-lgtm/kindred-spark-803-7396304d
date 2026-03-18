@@ -31,7 +31,16 @@ const mainNav: NavItem[] = [
 
 const productionNav: NavItem[] = [
   { label: "Fábrica", url: "/factory", icon: Factory },
+  { label: "Pipeline", url: "/pipeline", icon: GitBranch },
   { label: "Templates", url: "/templates", icon: FileStack },
+  { label: "Guiones", url: "/script-generator", icon: Sparkles },
+];
+
+const creativeNav: NavItem[] = [
+  { label: "Brand Studio", url: "/brand", icon: Palette },
+  { label: "Design Studio", url: "/design", icon: PenTool },
+  { label: "Prompt Builder", url: "/prompt-builder", icon: Wand2 },
+  { label: "Visual Prompts", url: "/visual-prompts", icon: Image },
 ];
 
 const systemNav: NavItem[] = [
