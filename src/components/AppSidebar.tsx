@@ -1,4 +1,4 @@
-import { Home, Mic, Factory, FileStack, BarChart3, Settings, ListTodo, FileText, LogOut, FolderOpen, Upload } from "lucide-react";
+import { Home, Mic, Factory, FileStack, BarChart3, Settings, ListTodo, FileText, LogOut, FolderOpen, Upload, Palette, PenTool, Sparkles, GitBranch, Wand2, Image, Eye } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
@@ -31,7 +31,16 @@ const mainNav: NavItem[] = [
 
 const productionNav: NavItem[] = [
   { label: "Fábrica", url: "/factory", icon: Factory },
+  { label: "Pipeline", url: "/pipeline", icon: GitBranch },
   { label: "Templates", url: "/templates", icon: FileStack },
+  { label: "Guiones", url: "/script-generator", icon: Sparkles },
+];
+
+const creativeNav: NavItem[] = [
+  { label: "Brand Studio", url: "/brand", icon: Palette },
+  { label: "Design Studio", url: "/design", icon: PenTool },
+  { label: "Prompt Builder", url: "/prompt-builder", icon: Wand2 },
+  { label: "Visual Prompts", url: "/visual-prompts", icon: Image },
 ];
 
 const systemNav: NavItem[] = [
@@ -101,6 +110,7 @@ export function AppSidebar() {
       <SidebarContent>
         <NavGroup label="Principal" items={mainNav} collapsed={collapsed} counts={countsMap} />
         <NavGroup label="Producción" items={productionNav} collapsed={collapsed} counts={countsMap} />
+        <NavGroup label="Creativo" items={creativeNav} collapsed={collapsed} counts={countsMap} />
         <NavGroup label="Sistema" items={systemNav} collapsed={collapsed} counts={countsMap} />
       </SidebarContent>
 

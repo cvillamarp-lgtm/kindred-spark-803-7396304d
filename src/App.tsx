@@ -25,6 +25,13 @@ const SystemPage = lazy(() => import("./pages/System"));
 const Resources = lazy(() => import("./pages/Resources"));
 const ImportPage = lazy(() => import("./pages/Import"));
 const NotFound = lazy(() => import("./pages/NotFound"));
+const BrandStudio = lazy(() => import("./pages/BrandStudio"));
+const DesignStudio = lazy(() => import("./pages/DesignStudio"));
+const ScriptGenerator = lazy(() => import("./pages/ScriptGenerator"));
+const ContentPipeline = lazy(() => import("./pages/ContentPipeline"));
+const PromptBuilder = lazy(() => import("./pages/PromptBuilder"));
+const VisualPromptGenerator = lazy(() => import("./pages/VisualPromptGenerator"));
+const EpisodeDetail = lazy(() => import("./pages/EpisodeDetail"));
 
 // Archived routes (still accessible but not in main nav)
 const Audience = lazy(() => import("./pages/Audience"));
@@ -78,6 +85,13 @@ const App = () => (
                         <Route path="/system" element={<SystemPage />} />
                         <Route path="/resources" element={<Resources />} />
                         <Route path="/import" element={<ImportPage />} />
+                        <Route path="/brand" element={<BrandStudio />} />
+                        <Route path="/design" element={<DesignStudio />} />
+                        <Route path="/script-generator" element={<ScriptGenerator />} />
+                        <Route path="/pipeline" element={<ContentPipeline />} />
+                        <Route path="/prompt-builder" element={<PromptBuilder />} />
+                        <Route path="/visual-prompts" element={<VisualPromptGenerator />} />
+                        <Route path="/episodes/:id/detail" element={<EpisodeDetail />} />
                         
                         {/* Archived routes (accessible but not in nav) */}
                         <Route path="/audience" element={<Audience />} />
