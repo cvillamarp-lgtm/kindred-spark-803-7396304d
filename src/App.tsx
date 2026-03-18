@@ -25,6 +25,13 @@ const SystemPage = lazy(() => import("./pages/System"));
 const Resources = lazy(() => import("./pages/Resources"));
 const ImportPage = lazy(() => import("./pages/Import"));
 const NotFound = lazy(() => import("./pages/NotFound"));
+const BrandStudio = lazy(() => import("./pages/BrandStudio"));
+const DesignStudio = lazy(() => import("./pages/DesignStudio"));
+const ScriptGenerator = lazy(() => import("./pages/ScriptGenerator"));
+const ContentPipeline = lazy(() => import("./pages/ContentPipeline"));
+const PromptBuilder = lazy(() => import("./pages/PromptBuilder"));
+const VisualPromptGenerator = lazy(() => import("./pages/VisualPromptGenerator"));
+const EpisodeDetail = lazy(() => import("./pages/EpisodeDetail"));
 
 // Archived routes (still accessible but not in main nav)
 const Audience = lazy(() => import("./pages/Audience"));
