@@ -110,6 +110,7 @@ export function AppSidebar() {
       <SidebarContent>
         <NavGroup label="Principal" items={mainNav} collapsed={collapsed} counts={countsMap} />
         <NavGroup label="Producción" items={productionNav} collapsed={collapsed} counts={countsMap} />
+        <NavGroup label="Creativo" items={creativeNav} collapsed={collapsed} counts={countsMap} />
         <NavGroup label="Sistema" items={systemNav} collapsed={collapsed} counts={countsMap} />
       </SidebarContent>
 
